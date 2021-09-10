@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
+
+sfm-cpu() {
+    BASE="$1"
+    THREAD_COUNT="$2"
+
+    "$SCRIPT_DIR/sfm-cpu.sh" "$BASE" "$THREAD_COUNT"
+}
+
+sfm-gpu() {
+    BASE="$1"
+
+    "$SCRIPT_DIR/sfm-gpu.sh" "$BASE"
+}
+
+print_help() {
+    cat <<EOF
+Usage: rodo SCRIPT WORKSPACE [ARGS]
+rodones script executor 
+
+available scripts:
+    sfm-cpu
+    sfm-gpu
+EOF
+}
+
+measure() {
+    CMD="$1"
+    BASE="$2"
+    LOGS="$BASE/logs"
+    ARGS="${*:2}"
+    DATE=$(date +"%FT%H%M%z")
+    NAME="$CMD""_""$DATE.txt"
+
+    [ "$CMD" = "measure" ] && exit 1
+
+    [ "$CMD" = "--help" ] && print_help && exit 0
+
+    [ -d "$LOGS" ] || mkdir "$LOGS"
+
+    time "$CMD" "$ARGS" | { tee "$LOGS/$NAME"; }
+}
+
+measure "$@"
