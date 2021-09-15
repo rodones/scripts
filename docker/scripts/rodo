@@ -3,21 +3,21 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 
 sfm-cpu() {
-    BASE="$1"
-    THREAD_COUNT="$2"
+    local BASE="$1"
+    local THREAD_COUNT="$2"
 
     "$SCRIPT_DIR/sfm-cpu.sh" "$BASE" "$THREAD_COUNT"
 }
 
 sfm-gpu() {
-    BASE="$1"
+    local BASE="$1"
 
     "$SCRIPT_DIR/sfm-gpu.sh" "$BASE"
 }
 
 print_help() {
     cat <<EOF
-Usage: rodo SCRIPT WORKSPACE [ARGS]
+Usage: $(basename "$0") SCRIPT WORKSPACE [ARGS]
 rodones script executor 
 
 available scripts:
@@ -27,12 +27,13 @@ EOF
 }
 
 measure() {
-    CMD="$1"
-    BASE="$2"
-    LOGS="$BASE/logs"
-    ARGS="${*:2}"
-    DATE=$(date +"%FT%H%M%z")
-    NAME="$CMD""_""$DATE.txt"
+    local CMD="$1"
+    local BASE="$2"
+    local LOGS="$BASE/logs"
+    local ARGS="${*:2}"
+    # shellcheck disable=SC2155
+    local DATE="$(date +"%FT%H%M%z")"
+    local NAME="$CMD""_""$DATE.txt"
 
     [ "$CMD" = "measure" ] && exit 1
 
