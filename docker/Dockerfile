@@ -70,3 +70,8 @@ RUN cd colmap && \
     cmake .. -DCUDA_ENABLED=$CUDA_ENABLED && \
     make -j4 && \
     make install
+
+# Install rodo dependencies
+RUN apt-get -y install \
+    python3 \
+    python3-numpy
