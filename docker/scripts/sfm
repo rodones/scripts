@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+
+PROG_NAME=$(basename "$0")
+BASE="/working"
+USE_GPU="$([ -f /NGC-DL-CONTAINER-LICENSE ] && echo 1 || echo 0)"
+MATCHER="exhaustive"
+NUM_THREAD="-1"
+
+OPTIONS=$(getopt -u -n "$PROG_NAME" -o hcgt:se -l help,cpu,gpu,thread:,sequential,exhaustive -- "$@")
+
+usage() {
+  cat <<EOF >&2
+$PROG_NAME [-c|-g] [-b [NUM]|-t [NUM]]
+Rodones COLMAP structure-from-motion script
+Options:
+  Hardware:
+    -c, --cpu                     use cpu instead of gpu. $([ "$USE_GPU" = "0" ] && echo "(default)")
+    -g, --gpu                     use gpu with cuda toolkit. $([ "$USE_GPU" = "1" ] && echo "(default)")
+    -t, --thread=N                use N threads if possible.
+  Matchers:
+    -e, --exhaustive              use exhaustive matcher
+    -s, --sequential              use sequential matcher
+EOF
+}
+
+eval set -- "$OPTIONS"
+
+while [ $# -gt 0 ]; do
+  case $1 in
+  -h | --help)
+    usage
+    exit
+    ;;
+  -c | --cpu)
+    USE_GPU=0
+    ;;
+  -g | --gpu)
+    USE_GPU=1
+    ;;
+  -s | --sequential)
+    MATCHER="sequential"
+    ;;
+  -e | --exhaustive)
+    MATCHER="exhaustive"
+    ;;
+  -t | --thread)
+    NUM_THREAD="$2"
+    shift
+    ;;
+  *) ;;
+  esac
+  shift
+done
+
+IMAGES="$BASE/images"
+OUTPUT="$BASE/output"
+DATABASE="$OUTPUT/database.db"
+SPARSE="$OUTPUT/sparse"
+
+echo "USE_GPU=$USE_GPU"
+echo "MATCHER=$MATCHER"
+echo "NUM_THREAD=$NUM_THREAD"
+
+[ ! -d "$BASE" ] && echo "error: $BASE does not exist." && exit 1
+
+[ -d "$OUTPUT" ] || mkdir "$OUTPUT"
+
+colmap feature_extractor \
+  --SiftExtraction.use_gpu="$USE_GPU" \
+  --SiftExtraction.num_thread="$NUM_THREAD" \
+  --database_path "$DATABASE" \
+  --image_path "$IMAGES"
+
+colmap "$MATCHER"_matcher \
+  --SiftMatching.use_gpu="$USE_GPU" \
+  --SiftMatching.num_thread="$NUM_THREAD" \
+  --database_path "$DATABASE"
+
+[ -d "$SPARSE" ] || mkdir "$SPARSE"
+
+colmap mapper \
+  --database_path "$DATABASE" \
+  --image_path "$IMAGES" \
+  --output_path "$SPARSE"

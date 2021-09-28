@@ -2,46 +2,35 @@
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 
-sfm-cpu() {
-    local BASE="$1"
-    local THREAD_COUNT="$2"
-
-    "$SCRIPT_DIR/sfm-cpu.sh" "$BASE" "$THREAD_COUNT"
-}
-
-sfm-gpu() {
-    local BASE="$1"
-
-    "$SCRIPT_DIR/sfm-gpu.sh" "$BASE"
-}
-
 print_help() {
-    cat <<EOF
+  cat <<EOF
 Usage: $(basename "$0") SCRIPT WORKSPACE [ARGS]
 rodones script executor 
 
 available scripts:
-    sfm-cpu
-    sfm-gpu
+$(find ./*.sh | sed "s/.sh//g;s/.\//   /g")
 EOF
 }
 
 measure() {
-    local CMD="$1"
-    local BASE="$2"
-    local LOGS="$BASE/logs"
-    local ARGS="${*:2}"
-    # shellcheck disable=SC2155
-    local DATE="$(date +"%FT%H%M%z")"
-    local NAME="$CMD""_""$DATE.txt"
+  local CMD="$1"
+  local LOGS="/working/logs"
+  local ARGS="${*:1}"
+  # shellcheck disable=SC2155
+  local DATE="$(date +"%FT%H%M%z")"
+  local NAME="$CMD""_""$DATE.txt"
 
-    [ "$CMD" = "measure" ] && exit 1
+  [ -d "$LOGS" ] || mkdir "$LOGS"
 
-    [ "$CMD" = "--help" ] && print_help && exit 0
-
-    [ -d "$LOGS" ] || mkdir "$LOGS"
-
-    time "$CMD" "$ARGS" | { tee "$LOGS/$NAME"; }
+  time "$SCRIPT_DIR/$CMD" "$ARGS" | { tee "$LOGS/$NAME"; }
+  
+  echo "==========================================" | tee -a "$LOGS/$NAME"
+  grep --color=never "Elapsed time:" "$LOGS/$NAME"  | tee -a "$LOGS/$NAME"
+  echo "==========================================" | tee -a "$LOGS/$NAME"
 }
 
-measure "$@"
+if [ "$1" = "--help" ]; then
+  print_help
+else
+  measure "$@"
+fi
