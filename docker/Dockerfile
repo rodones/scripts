@@ -15,11 +15,6 @@ ARG GID=1000
 RUN groupadd -g $GID -o $USERNAME
 RUN useradd -m -u $UID -g $GID -o -s /bin/bash $USERNAME
 
-# Copy scripts and append them to PATH
-COPY ./scripts /scripts
-RUN chmod +x /scripts/*
-ENV PATH="/scripts:${PATH}"
-
 # Prepare and empty machine for building
 RUN apt-get update && apt-get install -y \
     git \
@@ -75,3 +70,8 @@ RUN cd colmap && \
 RUN apt-get -y install \
     python3 \
     python3-numpy
+
+# Copy scripts and append them to PATH
+COPY ./scripts /scripts
+RUN chmod +x /scripts/*
+ENV PATH="/scripts:${PATH}"
