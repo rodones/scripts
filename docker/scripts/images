@@ -1,0 +1,58 @@
+#!/usr/bin/env python3
+
+from sys import path
+from os import listdir, write
+from os.path import join
+from argparse import ArgumentParser
+
+path.append("/colmap/scripts/python/")
+from read_write_model import read_images_binary
+
+sparse = "/working/output/sparse"
+folders = list(map(int, listdir(sparse)))
+
+parser = ArgumentParser()
+
+group = parser.add_mutually_exclusive_group(required=True)
+group.add_argument("--used", "--registered", "-r",
+                   action="store_true", help="list used images")
+group.add_argument("--unused", "--unregistered", "-u",
+                   action="store_true", help="list unused images")
+
+parser.add_argument("models", metavar="N", type=int, nargs="*",
+                    default=folders, help="model ids to be read")
+
+args = parser.parse_args()
+
+
+def list_used(sparse_images):
+    used_images = sorted(sparse_images)
+
+    for image in used_images:
+        print(image)
+
+
+def list_unused(sparse_images):
+    working_images = set(listdir("/working/images"))
+    unused_images = sorted(working_images.difference(sparse_images))
+
+    for image in unused_images:
+        print(image)
+
+def main():
+    sparse_images = set()
+    folders = [join(sparse, str(m)) for m in args.models]
+
+    for folder in folders:
+        images = read_images_binary(join(folder, "images.bin")).values()
+
+        for image in images:
+            sparse_images.add(image.name)
+
+    if args.used:
+        list_used(sparse_images)
+    elif args.unused:
+        list_unused(sparse_images)
+
+
+main()
