@@ -3,14 +3,14 @@
 BASE="$1"
 
 if [ -z "$BASE" ]; then
-  echo "error: working directory is not specified."
-  exit 1
+    echo "error: working directory is not specified."
+    exit 1
 elif [ ! -d "$BASE" ]; then
-  echo "error: working directory does not exist."
-  exit 2
+    echo "error: working directory does not exist."
+    exit 2
 elif [ ! -d "$BASE/images" ]; then
-  echo "error: the directory is not working directory. ensure that it has images folder."
-  exit 3
+    echo "error: the directory is not working directory. ensure that it has images folder."
+    exit 3
 fi
 
 BASE="$(realpath "$BASE")"
@@ -24,22 +24,22 @@ DENSE="$OUTPUT/dense"
 [ -d "$DENSE" ] || mkdir "$DENSE"
 
 colmap image_undistorter \
-  --image_path "$IMAGES" \
-  --input_path "$SPARSE/1" \
-  --output_path "$DENSE" \
-  --output_type COLMAP \
-  --max_image_size 1000
+    --image_path "$IMAGES" \
+    --input_path "$SPARSE/1" \
+    --output_path "$DENSE" \
+    --output_type COLMAP \
+    --max_image_size 1000
 
 colmap patch_match_stereo \
-  --workspace_path "$DENSE" \
-  --workspace_format COLMAP \
-  --PatchMatchStereo.geom_consistency false \
-  --PatchMatchStereo.filter true \
-  --PatchMatchStereo.window_step 2 \
-  --PatchMatchStereo.num_iterations 2
+    --workspace_path "$DENSE" \
+    --workspace_format COLMAP \
+    --PatchMatchStereo.geom_consistency false \
+    --PatchMatchStereo.filter true \
+    --PatchMatchStereo.window_step 2 \
+    --PatchMatchStereo.num_iterations 2
 
 colmap stereo_fusion \
-  --workspace_path "$DENSE" \
-  --workspace_format COLMAP \
-  --input_type photometric \
-  --output_path "$DENSE/fused.ply"
+    --workspace_path "$DENSE" \
+    --workspace_format COLMAP \
+    --input_type photometric \
+    --output_path "$DENSE/fused.ply"
