@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2155,SC2086
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 
 print_help() {
-  cat <<EOF
+    cat <<EOF
 Usage: $(basename "$0") SCRIPT WORKSPACE [ARGS]
 rodones script executor 
 
@@ -13,24 +14,27 @@ EOF
 }
 
 measure() {
-  local CMD="$1"
-  local LOGS="/working/logs"
-  local ARGS="${*:1}"
-  # shellcheck disable=SC2155
-  local DATE="$(date +"%FT%H%M%z")"
-  local NAME="$CMD""_""$DATE.txt"
+    local CMD="$1"
+    local LOGS="/working/logs"
+    local ARGS="${*:2}"
+    local DATE="$(date +"%FT%H%M%z")"
+    local NAME="$CMD""_""$DATE.txt"
 
-  [ -d "$LOGS" ] || mkdir "$LOGS"
+    [ -d "$LOGS" ] || mkdir "$LOGS"
 
-  time "$SCRIPT_DIR/$CMD" "$ARGS" | { tee "$LOGS/$NAME"; }
-  
-  echo "==========================================" | tee -a "$LOGS/$NAME"
-  grep --color=never "Elapsed time:" "$LOGS/$NAME"  | tee -a "$LOGS/$NAME"
-  echo "==========================================" | tee -a "$LOGS/$NAME"
+    time "$SCRIPT_DIR/$CMD" $ARGS | { tee "$LOGS/$NAME"; }
+
+    local ELAPSED_TIME="$(grep --color=never "Elapsed time:" "$LOGS/$NAME")"
+
+    [ -n "$ELAPSED_TIME" ] && cat <<EOF | tee -a "a"
+==========================================
+$ELAPSED_TIME
+==========================================
+EOF
 }
 
 if [ "$1" = "--help" ]; then
-  print_help
+    print_help
 else
-  measure "$@"
+    measure "$@"
 fi
