@@ -6,6 +6,7 @@ ORG="rodones"
 NAME="colmap"
 VERSION="latest"
 SCRIPTS_DIR="./docker/scripts"
+VOCAB_TREES_DIR="./docker/vocab-trees"
 
 if [ -z "$WORK_DIR" ]; then
 	echo "error: working directory is not specified."
@@ -37,4 +38,5 @@ docker run \
 	-w /working \
 	-v "$(realpath "$WORK_DIR"):/working" \
 	-v "$(realpath "$SCRIPTS_DIR"):/scripts" \
+	-v "$(realpath "$VOCAB_TREES_DIR"):/vocab-trees" \
 	-it "$ORG/$NAME:$VERSION"

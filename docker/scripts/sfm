@@ -8,7 +8,7 @@ MATCHER="exhaustive"
 MATCHER_COND_ARGS=()
 NUM_THREAD="-1"
 
-OPTIONS=$(getopt -u -n "$PROG_NAME" -o hcgt:sev -l help,cpu,gpu,thread:,sequential,exhaustive,vocab-tree -- "$@")
+OPTIONS=$(getopt -u -n "$PROG_NAME" -o hcgt:sev: -l help,cpu,gpu,thread:,sequential,exhaustive,vocab-tree: -- "$@")
 
 usage() {
     cat <<EOF >&2
