@@ -75,3 +75,4 @@ RUN apt-get -y install \
 COPY ./scripts /scripts
 RUN chmod +x /scripts/*
 ENV PATH="/scripts:${PATH}"
+ENV LANG=C.UTF-8
