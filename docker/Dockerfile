@@ -76,3 +76,4 @@ COPY ./scripts /scripts
 RUN chmod +x /scripts/*
 ENV PATH="/scripts:${PATH}"
 ENV LANG=C.UTF-8
+ENV PYTHONPATH="/colmap/scripts/python/"
