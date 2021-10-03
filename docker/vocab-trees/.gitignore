@@ -1,0 +1,6 @@
+# Put your vocabulary trees here.
+# Example resources:
+#   - https://demuc.de/colmap/#download
+
+*
+!.gitignore

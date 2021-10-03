@@ -2,15 +2,17 @@
 
 PROG_NAME=$(basename "$0")
 BASE="/working"
+VOCAB_TREES="/vocab-trees"
 USE_GPU="$([ -f /NGC-DL-CONTAINER-LICENSE ] && echo 1 || echo 0)"
 MATCHER="exhaustive"
+MATCHER_COND_ARGS=()
 NUM_THREAD="-1"
 
-OPTIONS=$(getopt -u -n "$PROG_NAME" -o hcgt:se -l help,cpu,gpu,thread:,sequential,exhaustive -- "$@")
+OPTIONS=$(getopt -u -n "$PROG_NAME" -o hcgt:sev -l help,cpu,gpu,thread:,sequential,exhaustive,vocab-tree -- "$@")
 
 usage() {
     cat <<EOF >&2
-$PROG_NAME [-c|-g] [-b [NUM]|-t [NUM]]
+$PROG_NAME [[-c|-g] -t N] [-e|-s|-v VT]
 Rodones COLMAP structure-from-motion script
 Options:
   Hardware:
@@ -18,8 +20,9 @@ Options:
     -g, --gpu                     use gpu with cuda toolkit. $([ "$USE_GPU" = "1" ] && echo "(default)")
     -t, --thread=N                use N threads if possible.
   Matchers:
-    -e, --exhaustive              use exhaustive matcher
-    -s, --sequential              use sequential matcher
+    -e, --exhaustive              use exhaustive matcher (default).
+    -s, --sequential              use sequential matcher.
+    -v, --vocab-tree=VT           use vocabulary tree matcher.
 EOF
 }
 
@@ -42,6 +45,15 @@ while [ $# -gt 0 ]; do
         ;;
     -e | --exhaustive)
         MATCHER="exhaustive"
+        ;;
+    -v | --vocab-tree)
+        MATCHER="vocab_tree"
+        VOCAB_TREE_PATH="$VOCAB_TREES/$2.bin"
+
+        [ ! -f "$VOCAB_TREE_PATH" ] && echo "error: given vocab tree '$VOCAB_TREE_PATH' does not exist." && exit 2
+
+        MATCHER_COND_ARGS+=("--VocabTreeMatching.vocab_tree_path=$VOCAB_TREE_PATH")
+        shift
         ;;
     -t | --thread)
         NUM_THREAD="$2"
@@ -74,7 +86,8 @@ colmap feature_extractor \
 colmap "$MATCHER"_matcher \
     --SiftMatching.use_gpu="$USE_GPU" \
     --SiftMatching.num_thread="$NUM_THREAD" \
-    --database_path "$DATABASE"
+    --database_path "$DATABASE" \
+    "${MATCHER_COND_ARGS[@]}"
 
 [ -d "$SPARSE" ] || mkdir "$SPARSE"
 
