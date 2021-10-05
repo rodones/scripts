@@ -6,13 +6,16 @@ VOCAB_TREES="/vocab-trees"
 USE_GPU="$([ -f /NGC-DL-CONTAINER-LICENSE ] && echo 1 || echo 0)"
 MATCHER="exhaustive"
 MATCHER_COND_ARGS=()
-NUM_THREAD="-1"
+NUM_THREAD="4"
+VOCAB_TREE_PATH=""
+PIPELINE=()
+PIPELINE_VALUES=("feature_extractor" "matcher" "mapper")
 
-OPTIONS=$(getopt -u -n "$PROG_NAME" -o hcgt:sev: -l help,cpu,gpu,thread:,sequential,exhaustive,vocab-tree: -- "$@")
+OPTIONS=$(getopt -u -n "$PROG_NAME" -o hcgt:sev:x: -l help,cpu,gpu,thread:,sequential,exhaustive,vocab-tree:,exec: -- "$@")
 
 usage() {
     cat <<EOF >&2
-$PROG_NAME [[-c|-g] -t N] [-e|-s|-v VT]
+$PROG_NAME [[-c|-g] -t N] [-e|-s|-v VT] [-x STEP [STEP...]]
 Rodones COLMAP structure-from-motion script
 Options:
   Hardware:
@@ -23,7 +26,46 @@ Options:
     -e, --exhaustive              use exhaustive matcher (default).
     -s, --sequential              use sequential matcher.
     -v, --vocab-tree=VT           use vocabulary tree matcher.
+  
+  -x, --exec=STEP...              only execute given steps.
+                                  values: ${PIPELINE_VALUES[*]}             
 EOF
+}
+
+print_config() {
+    cat <<EOF | sed -E '/^$/d' >&2
+==========================================
+GPU: $USE_GPU
+PIPELINE: ${PIPELINE[*]}
+MATCHER: $MATCHER
+NUM_THREAD: $NUM_THREAD
+$([ "$MATCHER" = "vocab_tree" ] && echo "VOCAB_TREE_PATH: $VOCAB_TREE_PATH")
+==========================================
+EOF
+}
+
+is_array_contains() {
+    local -rn array="$1"
+    local value="$2"
+    echo x "${array[@]}" "$value"
+    if [[ ! " ${array[*]} " == *" ${value} "* ]]; then
+        return 1
+    fi
+
+    return 0
+}
+
+is_array_typeof() {
+    local -rn array="$1"
+    local -rn valid_values="$2"
+
+    for i in "${!array[@]}"; do
+        if [[ ! " ${valid_values[*]} " == *" ${array[i]} "* ]]; then
+            return $(("$i" + 1))
+        fi
+    done
+
+    return 0
 }
 
 eval set -- "$OPTIONS"
@@ -59,6 +101,15 @@ while [ $# -gt 0 ]; do
         NUM_THREAD="$2"
         shift
         ;;
+    -x | --exec)
+        set -f
+        IFS="," read -r -a PIPELINE <<<"$2"
+
+        ! is_array_typeof PIPELINE PIPELINE_VALUES &&
+            echo "error: ${PIPELINE[$(("$?" - 1))]} is not valid step. the possible values are ${PIPELINE_VALUES[*]}." &&
+            exit 3
+        shift
+        ;;
     *) ;;
     esac
     shift
@@ -69,29 +120,33 @@ OUTPUT="$BASE/output"
 DATABASE="$OUTPUT/database.db"
 SPARSE="$OUTPUT/sparse"
 
-echo "USE_GPU=$USE_GPU"
-echo "MATCHER=$MATCHER"
-echo "NUM_THREAD=$NUM_THREAD"
+print_config
 
 [ ! -d "$BASE" ] && echo "error: $BASE does not exist." && exit 1
 
 [ -d "$OUTPUT" ] || mkdir "$OUTPUT"
 
-colmap feature_extractor \
-    --SiftExtraction.use_gpu="$USE_GPU" \
-    --SiftExtraction.num_thread="$NUM_THREAD" \
-    --database_path "$DATABASE" \
-    --image_path "$IMAGES"
+if is_array_contains PIPELINE "feature_extractor"; then
+    colmap feature_extractor \
+        --SiftExtraction.use_gpu="$USE_GPU" \
+        --SiftExtraction.num_thread="$NUM_THREAD" \
+        --database_path "$DATABASE" \
+        --image_path "$IMAGES"
+fi
 
-colmap "$MATCHER"_matcher \
-    --SiftMatching.use_gpu="$USE_GPU" \
-    --SiftMatching.num_thread="$NUM_THREAD" \
-    --database_path "$DATABASE" \
-    "${MATCHER_COND_ARGS[@]}"
+if is_array_contains PIPELINE "matcher"; then
+    colmap "$MATCHER"_matcher \
+        --SiftMatching.use_gpu="$USE_GPU" \
+        --SiftMatching.num_thread="$NUM_THREAD" \
+        --database_path "$DATABASE" \
+        "${MATCHER_COND_ARGS[@]}"
+fi
 
-[ -d "$SPARSE" ] || mkdir "$SPARSE"
+if is_array_contains PIPELINE "mapper"; then
+    [ -d "$SPARSE" ] || mkdir "$SPARSE"
 
-colmap mapper \
-    --database_path "$DATABASE" \
-    --image_path "$IMAGES" \
-    --output_path "$SPARSE"
+    colmap mapper \
+        --database_path "$DATABASE" \
+        --image_path "$IMAGES" \
+        --output_path "$SPARSE"
+fi
