@@ -8,7 +8,7 @@ MATCHER="exhaustive"
 MATCHER_COND_ARGS=()
 NUM_THREAD="4"
 VOCAB_TREE_PATH=""
-PIPELINE=()
+PIPELINE=("feature_extractor" "matcher" "mapper")
 PIPELINE_VALUES=("feature_extractor" "matcher" "mapper")
 
 OPTIONS=$(getopt -u -n "$PROG_NAME" -o hcgt:sev:x: -l help,cpu,gpu,thread:,sequential,exhaustive,vocab-tree:,exec: -- "$@")
