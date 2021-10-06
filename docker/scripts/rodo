@@ -26,7 +26,7 @@ measure() {
 
     local ELAPSED_TIME="$(grep --color=never "Elapsed time:" "$LOGS/$NAME")"
 
-    [ -n "$ELAPSED_TIME" ] && cat <<EOF | tee -a "a"
+    [ -n "$ELAPSED_TIME" ] && cat <<EOF | tee -a "$LOGS/$NAME"
 ==========================================
 $ELAPSED_TIME
 ==========================================
