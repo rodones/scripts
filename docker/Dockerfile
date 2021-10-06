@@ -69,7 +69,8 @@ RUN cd colmap && \
 # Install rodo dependencies
 RUN apt-get -y install \
     python3 \
-    python3-numpy
+    python3-numpy \
+    python3-pil
 
 # Copy scripts and append them to PATH
 COPY ./scripts /scripts
