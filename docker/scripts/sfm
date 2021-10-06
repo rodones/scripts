@@ -47,7 +47,7 @@ EOF
 is_array_contains() {
     local -rn array="$1"
     local value="$2"
-    echo x "${array[@]}" "$value"
+
     if [[ ! " ${array[*]} " == *" ${value} "* ]]; then
         return 1
     fi
