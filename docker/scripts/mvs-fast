@@ -23,9 +23,11 @@ DENSE="$OUTPUT/dense"
 [ -d "$OUTPUT" ] || mkdir "$OUTPUT"
 [ -d "$DENSE" ] || mkdir "$DENSE"
 
+MODEL_ID="0"
+
 colmap image_undistorter \
     --image_path "$IMAGES" \
-    --input_path "$SPARSE/1" \
+    --input_path "$SPARSE/$MODEL_ID" \
     --output_path "$DENSE" \
     --output_type COLMAP \
     --max_image_size 1000
@@ -36,10 +38,10 @@ colmap patch_match_stereo \
     --PatchMatchStereo.geom_consistency false \
     --PatchMatchStereo.filter true \
     --PatchMatchStereo.window_step 2 \
-    --PatchMatchStereo.num_iterations 2
+    --PatchMatchStereo.num_iterations 8
 
 colmap stereo_fusion \
     --workspace_path "$DENSE" \
     --workspace_format COLMAP \
     --input_type photometric \
-    --output_path "$DENSE/fused.ply"
+    --output_path "$DENSE/fused-$MODEL_ID.ply"
