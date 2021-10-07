@@ -38,7 +38,7 @@ colmap patch_match_stereo \
     --PatchMatchStereo.geom_consistency false \
     --PatchMatchStereo.filter true \
     --PatchMatchStereo.window_step 2 \
-    --PatchMatchStereo.num_iterations 8
+    --PatchMatchStereo.num_iterations 2
 
 colmap stereo_fusion \
     --workspace_path "$DENSE" \
