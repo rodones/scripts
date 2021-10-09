@@ -70,12 +70,15 @@ RUN cd colmap && \
 RUN apt-get -y install \
     python3 \
     python3-numpy \
-    python3-pil
+    python3-pil \
+    curl
 
 # Copy scripts and append them to PATH
 COPY ./scripts /scripts
 RUN chmod +x /scripts/*
-ENV PATH="/scripts:${PATH}"
-ENV LANG=C.UTF-8
-ENV PYTHONPATH="/colmap/scripts/python/"
+
+ENV PATH="/scripts:${PATH}" \ 
+    LANG="C.UTF-8" \
+    PYTHONPATH="/colmap/scripts/python/"
+
 RUN echo 'export PS1="($WORKSPACE_NAME) $PS1"' >> "/home/$USERNAME/.bashrc"

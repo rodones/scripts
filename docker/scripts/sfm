@@ -15,7 +15,7 @@ OPTIONS=$(getopt -u -n "$PROG_NAME" -o hcgt:sev:x: -l help,cpu,gpu,thread:,seque
 
 usage() {
     cat <<EOF >&2
-$PROG_NAME [[-c|-g] -t N] [-e|-s|-v VT] [-x STEP [STEP...]]
+$PROG_NAME [[-c|-g] -t N] [-e|-s|-v VT] [-x STEP [STEP]...]
 Rodones COLMAP structure-from-motion script
 Options:
   Hardware:
@@ -35,11 +35,11 @@ EOF
 print_config() {
     cat <<EOF | sed -E '/^$/d' >&2
 ==========================================
-GPU: $USE_GPU
-PIPELINE: ${PIPELINE[*]}
-MATCHER: $MATCHER
-NUM_THREAD: $NUM_THREAD
-$([ "$MATCHER" = "vocab_tree" ] && echo "VOCAB_TREE_PATH: $VOCAB_TREE_PATH")
+GPU         : $USE_GPU
+PIPELINE    : ${PIPELINE[*]}
+MATCHER     : $MATCHER
+THREAD      : $NUM_THREAD
+$([ "$MATCHER" = "vocab_tree" ] && echo "VOCAB_TREE  : $VOCAB_TREE_PATH")
 ==========================================
 EOF
 }

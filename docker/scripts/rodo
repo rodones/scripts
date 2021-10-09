@@ -13,6 +13,12 @@ $(find ./*.sh | sed "s/.sh//g;s/.\//   /g")
 EOF
 }
 
+send_telegram_message() {
+    curl -X POST "https://api.telegram.org/bot$TELEGRAM_API_KEY/sendMessage" \
+        -H "Content-Type: application/json" \
+        -d "{ \"chat_id\": \"$TELEGRAM_CHAT_ID\", \"text\": \"$1\" }" >/dev/null 2>&1
+}
+
 measure() {
     local CMD="$1"
     local LOGS="/working/logs"
@@ -22,14 +28,15 @@ measure() {
 
     [ -d "$LOGS" ] || mkdir "$LOGS"
 
-    time "$SCRIPT_DIR/$CMD" $ARGS | { tee "$LOGS/$NAME"; }
-
+    (time "$SCRIPT_DIR/$CMD" $ARGS || send_telegram_message "FAILED!") | { tee "$LOGS/$NAME"; }
     local ELAPSED_TIME="$(grep --color=never "Elapsed time:" "$LOGS/$NAME")"
 
-    [ -n "$ELAPSED_TIME" ] && cat <<EOF | tee -a "$LOGS/$NAME"
-==========================================
+    [ -n "$ELAPSED_TIME" ] &&
+        send_telegram_message "$ELAPSED_TIME" &&
+        cat <<EOF | tee -a "$LOGS/$NAME"
+==============================================================================
 $ELAPSED_TIME
-==========================================
+==============================================================================
 EOF
 }
 
