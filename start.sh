@@ -38,4 +38,5 @@ docker run \
 	-v "$(realpath "$WORK_DIR"):/working" \
 	-v "$(realpath "$SCRIPTS_DIR"):/scripts" \
 	-v "$(realpath "$VOCAB_TREES_DIR"):/vocab-trees" \
+    --env WORKSPACE_NAME="$(basename "$WORK_DIR")" \
 	-it "$ORG/$NAME:$VERSION"

@@ -78,3 +78,4 @@ RUN chmod +x /scripts/*
 ENV PATH="/scripts:${PATH}"
 ENV LANG=C.UTF-8
 ENV PYTHONPATH="/colmap/scripts/python/"
+RUN echo 'export PS1="($WORKSPACE_NAME) $PS1"' >> "/home/$USERNAME/.bashrc"
