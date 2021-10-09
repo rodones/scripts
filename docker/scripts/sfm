@@ -1,5 +1,13 @@
 #!/usr/bin/env bash
 
+SCRIPT_DIR="$(
+    cd -- "$(dirname "$0")" >/dev/null 2>&1 || exit
+    pwd -P
+)"
+
+# shellcheck source=common/array.sh
+source "$SCRIPT_DIR/common/array.sh"
+
 PROG_NAME=$(basename "$0")
 BASE="/working"
 VOCAB_TREES="/vocab-trees"
@@ -11,10 +19,8 @@ VOCAB_TREE_PATH=""
 PIPELINE=("feature_extractor" "matcher" "mapper")
 PIPELINE_VALUES=("feature_extractor" "matcher" "mapper")
 
-OPTIONS=$(getopt -u -n "$PROG_NAME" -o hcgt:sev:x: -l help,cpu,gpu,thread:,sequential,exhaustive,vocab-tree:,exec: -- "$@")
-
 usage() {
-    cat <<EOF >&2
+    cat <<EOF
 $PROG_NAME [[-c|-g] -t N] [-e|-s|-v VT] [-x STEP [STEP]...]
 Rodones COLMAP structure-from-motion script
 Options:
@@ -33,40 +39,23 @@ EOF
 }
 
 print_config() {
-    cat <<EOF | sed -E '/^$/d' >&2
-==========================================
+    cat <<EOF | sed -E '/^$/d'
+==============================================================================
 GPU         : $USE_GPU
 PIPELINE    : ${PIPELINE[*]}
 MATCHER     : $MATCHER
 THREAD      : $NUM_THREAD
 $([ "$MATCHER" = "vocab_tree" ] && echo "VOCAB_TREE  : $VOCAB_TREE_PATH")
-==========================================
+==============================================================================
 EOF
 }
 
-is_array_contains() {
-    local -rn array="$1"
-    local value="$2"
-
-    if [[ ! " ${array[*]} " == *" ${value} "* ]]; then
-        return 1
-    fi
-
-    return 0
-}
-
-is_array_typeof() {
-    local -rn array="$1"
-    local -rn valid_values="$2"
-
-    for i in "${!array[@]}"; do
-        if [[ ! " ${valid_values[*]} " == *" ${array[i]} "* ]]; then
-            return $(("$i" + 1))
-        fi
-    done
-
-    return 0
-}
+if ! OPTIONS=$(getopt -n "$PROG_NAME" \
+    -o hcgt:sev:x: \
+    -l help,cpu,gpu,thread:,sequential,exhaustive,vocab-tree:,exec: \
+    -- "$@"); then
+    exit
+fi
 
 eval set -- "$OPTIONS"
 
@@ -105,9 +94,13 @@ while [ $# -gt 0 ]; do
         set -f
         IFS="," read -r -a PIPELINE <<<"$2"
 
-        ! is_array_typeof PIPELINE PIPELINE_VALUES &&
-            echo "error: ${PIPELINE[$(("$?" - 1))]} is not valid step. the possible values are ${PIPELINE_VALUES[*]}." &&
+        array_typeof PIPELINE PIPELINE_VALUES
+        index="$(("$?" - 1))"
+
+        if [ "$index" -ge 0 ]; then
+            echo "error: '${PIPELINE[$index]}' is not valid step. the possible values are ${PIPELINE_VALUES[*]}."
             exit 3
+        fi
         shift
         ;;
     *) ;;
@@ -126,7 +119,7 @@ print_config
 
 [ -d "$OUTPUT" ] || mkdir "$OUTPUT"
 
-if is_array_contains PIPELINE "feature_extractor"; then
+if array_contains PIPELINE "feature_extractor"; then
     colmap feature_extractor \
         --SiftExtraction.use_gpu="$USE_GPU" \
         --SiftExtraction.num_thread="$NUM_THREAD" \
@@ -134,7 +127,7 @@ if is_array_contains PIPELINE "feature_extractor"; then
         --image_path "$IMAGES"
 fi
 
-if is_array_contains PIPELINE "matcher"; then
+if array_contains PIPELINE "matcher"; then
     colmap "$MATCHER"_matcher \
         --SiftMatching.use_gpu="$USE_GPU" \
         --SiftMatching.num_thread="$NUM_THREAD" \
@@ -142,7 +135,7 @@ if is_array_contains PIPELINE "matcher"; then
         "${MATCHER_COND_ARGS[@]}"
 fi
 
-if is_array_contains PIPELINE "mapper"; then
+if array_contains PIPELINE "mapper"; then
     [ -d "$SPARSE" ] || mkdir "$SPARSE"
 
     colmap mapper \
