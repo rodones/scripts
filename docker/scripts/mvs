@@ -1,4 +1,12 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
+
+SCRIPT_DIR="$(
+    cd -- "$(dirname "$0")" >/dev/null 2>&1 || exit
+    pwd -P
+)"
+
+# shellcheck source=common/array.sh
+source "$SCRIPT_DIR/common/array.sh"
 
 PROG_NAME=$(basename "$0")
 BASE="/working"
@@ -12,33 +20,51 @@ NUM_ITERATIONS="2"
 WINDOW_STEP="2"
 FILTER="true"
 GEOM_CONSISTENCY="false"
+STREO_FUSION_INPUT_TYPE="photometric"
+MAX_IMAGE_SIZE="1000"
+PIPELINE=("image_undistorter" "patch_match_stereo" "stereo_fusion")
+PIPELINE_VALUES=("image_undistorter" "patch_match_stereo" "stereo_fusion" "poisson_mesher" "delaunay_mesher")
 
 print_config() {
-    cat <<EOF | sed -E '/^$/d' >&2
-==========================================
-MODEL       : $MODEL_ID
-ITERATION   : $NUM_ITERATIONS
-STEP        : $WINDOW_STEP
-FILTER      : $FILTER
-CONSISTENCY : $GEOM_CONSISTENCY
-==========================================
+    cat <<EOF | sed -E '/^$/d'
+==============================================================================
+MODEL                   : $MODEL_ID
+ITERATION               : $NUM_ITERATIONS
+STEP                    : $WINDOW_STEP
+FILTER                  : $FILTER
+CONSISTENCY             : $GEOM_CONSISTENCY
+STREO_FUSION_INPUT_TYPE : $STREO_FUSION_INPUT_TYPE
+MAX_IMAGE_SIZE          : $MAX_IMAGE_SIZE
+PIPELINE:               : ${PIPELINE[*]}
+==============================================================================
 EOF
 }
 
 print_usage() {
-        cat <<EOF >&2
-$PROG_NAME [OPTION]...
+    cat <<EOF
+$PROG_NAME [-p|-g] [OPTION]...
 Rodones COLMAP multi-view stereo script
 Options:
+ Type:
+  -p, --photometric               outputs fast but low quality. (default)
+  -g, --geometric                 outputs slow but high quality.
+ Others:
   -m, --model=ID                  sparse model id. (default: $MODEL_ID)
   -i, --iterations=N              number of iterations performed by patch_match_stereo step. (default: $NUM_ITERATIONS)
   -s, --step=N                    window step count performed by patch_match_stereo step. (default: $WINDOW_STEP)
-  -f, --filter[=N]                enable filtering for patch_match_stereo step. (default: $FILTER)
-  -c, --consistency[=N]           enable geometric consistency for patch_match_stereo step. (default: $GEOM_CONSISTENCY)
+  -f, --filter[=B]                enables filtering patch_match_stereo step. (default: $FILTER)
+  -M, --max-image-size=N          sets maximum image size for image_undistorter step. (default: $MAX_IMAGE_SIZE)
+  -e, --exec=STEP...              executes only given steps.
+                                  values: ${PIPELINE_VALUES[*]}
 EOF
 }
 
-OPTIONS=$(getopt -n "$PROG_NAME" -o hm:i:s:f::c:: -l help,model:,iteration:,step:,filter::,consistency:: -- "$@")
+if ! OPTIONS=$(getopt -n "$PROG_NAME" \
+    -o hm:i:s:f::gpM:x: \
+    -l help,model:,iteration:,step:,filter::,geometric,photometric,max-image-size:,exec: \
+    -- "$@"); then
+    exit
+fi
 
 eval set -- "$OPTIONS"
 
@@ -65,9 +91,32 @@ while [ $# -gt 0 ]; do
         FILTER="${2:-true}"
         shift 2
         ;;
-    -c | --consistency)
-        GEOM_CONSISTENCY="${2:-true}"
+    -g | --geometric)
+        GEOM_CONSISTENCY="true"
+        STREO_FUSION_INPUT_TYPE="geometric"
+        shift
+        ;;
+    -p | --photometric)
+        GEOM_CONSISTENCY="false"
+        STREO_FUSION_INPUT_TYPE="photometric"
+        shift
+        ;;
+    -M | --max-image-size)
+        MAX_IMAGE_SIZE="$2"
         shift 2
+        ;;
+    -x | --exec)
+        set -f
+        IFS="," read -r -a PIPELINE <<<"$2"
+
+        array_typeof PIPELINE PIPELINE_VALUES
+        index="$(("$?" - 1))"
+
+        if [ "$index" -ge 0 ]; then
+            echo "error: '${PIPELINE[$index]}' is not valid step. the possible values are ${PIPELINE_VALUES[*]}."
+            exit 3
+        fi
+        shift
         ;;
     --)
         shift
@@ -81,26 +130,49 @@ done
 
 print_config
 
-# [ -d "$OUTPUT" ] || mkdir "$OUTPUT"
-# [ -d "$DENSE" ] || mkdir "$DENSE"
+FUSION_OUTPUT="$DENSE/fused-${MODEL_ID}-${STREO_FUSION_INPUT_TYPE}-${NUM_ITERATIONS}i-${WINDOW_STEP}s.ply"
+POISSON_OUTPUT="$DENSE/meshed-poisson-${MODEL_ID}-${STREO_FUSION_INPUT_TYPE}-${NUM_ITERATIONS}i-${WINDOW_STEP}s.ply"
+DELAUNAY_OUTPUT="$DENSE/meshed-delaunay-${MODEL_ID}-${STREO_FUSION_INPUT_TYPE}-${NUM_ITERATIONS}i-${WINDOW_STEP}s.ply"
 
-echo colmap image_undistorter \
-    --image_path "$IMAGES" \
-    --input_path "$SPARSE/$MODEL_ID" \
-    --output_path "$DENSE" \
-    --output_type COLMAP \
-    --max_image_size 1000
+[ -d "$OUTPUT" ] || mkdir "$OUTPUT"
+[ -d "$DENSE" ] || mkdir "$DENSE"
 
-echo colmap patch_match_stereo \
-    --workspace_path "$DENSE" \
-    --workspace_format COLMAP \
-    --PatchMatchStereo.geom_consistency "$GEOM_CONSISTENCY" \
-    --PatchMatchStereo.filter "$FILTER" \
-    --PatchMatchStereo.window_step "$WINDOW_STEP" \
-    --PatchMatchStereo.num_iterations "$NUM_ITERATIONS"
+if array_contains PIPELINE "image_undistorter"; then
+    colmap image_undistorter \
+        --image_path "$IMAGES" \
+        --input_path "$SPARSE/$MODEL_ID" \
+        --output_path "$DENSE" \
+        --output_type COLMAP \
+        --max_image_size "$MAX_IMAGE_SIZE"
+fi
 
-echo colmap stereo_fusion \
-    --workspace_path "$DENSE" \
-    --workspace_format COLMAP \
-    --input_type photometric \
-    --output_path "$DENSE/fused-$MODEL_ID.ply"
+if array_contains PIPELINE "patch_match_stereo"; then
+    colmap patch_match_stereo \
+        --workspace_path "$DENSE" \
+        --workspace_format COLMAP \
+        --PatchMatchStereo.geom_consistency "$GEOM_CONSISTENCY" \
+        --PatchMatchStereo.filter "$FILTER" \
+        --PatchMatchStereo.window_step "$WINDOW_STEP" \
+        --PatchMatchStereo.num_iterations "$NUM_ITERATIONS"
+fi
+
+if array_contains PIPELINE "stereo_fusion"; then
+    colmap stereo_fusion \
+        --workspace_path "$DENSE" \
+        --workspace_format COLMAP \
+        --input_type "$STREO_FUSION_INPUT_TYPE" \
+        --output_path "$FUSION_OUTPUT"
+fi
+
+if array_contains PIPELINE "poisson_mesher"; then
+    colmap poisson_mesher \
+        --input_path "$FUSION_OUTPUT" \
+        --output_path "$POISSON_OUTPUT"
+fi
+
+if array_contains PIPELINE "delaunay_mesher"; then
+    colmap delaunay_mesher \
+        --input_path "$DENSE" \
+        --input_type dense \
+        --output_path "$DELAUNAY_OUTPUT"
+fi
