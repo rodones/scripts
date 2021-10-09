@@ -5,5 +5,10 @@
     "python.formatting.autopep8Args": [
         "--max-line-length=200"
     ],
-    "editor.rulers": [ 120 ]
+    "editor.rulers": [
+        120
+    ],
+    "shellcheck.customArgs": [
+        "-x"
+    ]
 }
