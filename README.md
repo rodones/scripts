@@ -6,9 +6,7 @@ This repository contains custom scripts, docker files, etc.
 
 - Build colmap [docker](./docker) images.
 
-- Create `data` folder and put your images into it.
-
-      mkdir data
+- Create `.env` using [.env.example](./.env.example).
 
 - Start interactive session using [./start.sh](./start.sh).
 
@@ -16,6 +14,7 @@ This repository contains custom scripts, docker files, etc.
 
 - Execute scripts using `rodo` in the container.
   - Type `rodo --help` to see available scripts.
+  - Note: If you don't want logging and notification, skip this.
 
 ## Video to Image Convertion
 

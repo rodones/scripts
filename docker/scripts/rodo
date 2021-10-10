@@ -1,11 +1,24 @@
 #!/usr/bin/env bash
-# shellcheck disable=SC2155,SC2086
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 
+# shellcheck source=common/string.sh
+source "$SCRIPT_DIR/common/string.sh"
+
+LOGS="/working/logs"
+PROG_NAME=$(basename "$0")
+
+CMD="$1"
+ARGS="${*:2}"
+DATE="$(date +"%Y-%m-%d_%H-%M-%S")"
+NAME="${CMD}_${DATE}"
+LOG_FILE="${NAME}.txt"
+
+set -o pipefail
+
 print_help() {
     cat <<EOF
-Usage: $(basename "$0") SCRIPT WORKSPACE [ARGS]
+Usage: $PROG_NAME SCRIPT WORKSPACE [ARGS]
 rodones script executor 
 
 available scripts:
@@ -14,35 +27,65 @@ EOF
 }
 
 send_telegram_message() {
+    [ -z "$TELEGRAM_API_KEY" ] && echo "warning: TELEGRAM_API_KEY is not specified." >&2 && return 0
+    [ -z "$TELEGRAM_CHAT_ID" ] && echo "warning: TELEGRAM_CHAT_ID is not specified." >&2 && return 0
+
+    # [[ "$CMD" = "test_"* ]] && echo -e "send_telegram_message::\n$1" && return 0
+
     curl -X POST "https://api.telegram.org/bot$TELEGRAM_API_KEY/sendMessage" \
         -H "Content-Type: application/json" \
-        -d "{ \"chat_id\": \"$TELEGRAM_CHAT_ID\", \"text\": \"$1\" }" >/dev/null 2>&1
+        -d "{ \"chat_id\": \"$TELEGRAM_CHAT_ID\", \"text\": \"${1//\"/\\\"}\", \"parse_mode\": \"html\" }" >/dev/null 2>&1
+
     return 0 # silently ignore curl error
 }
 
-measure() {
-    local CMD="$1"
-    local LOGS="/working/logs"
-    local ARGS="${*:2}"
-    local DATE="$(date +"%FT%H%M%z")"
-    local NAME="$CMD""_""$DATE.txt"
+get_size_only_safe() {
+    du -sh "$@" 2>/dev/null | cut -f1
+}
 
-    [ -d "$LOGS" ] || mkdir "$LOGS"
+get_size_safe() {
+    du -sh "$@" 2>/dev/null | sort -rh | awk '{ sub(/.*\//, "", $2); print $2 " " $1; }'
+}
 
-    (time "$SCRIPT_DIR/$CMD" $ARGS || send_telegram_message "FAILED!") | { tee "$LOGS/$NAME"; }
-    local ELAPSED_TIME="$(grep --color=never "Elapsed time:" "$LOGS/$NAME")"
+if [ "$CMD" = "--help" ] || [ "$CMD" = "-h" ]; then
+    print_help
+    exit
+fi
 
-    [ -n "$ELAPSED_TIME" ] &&
-        send_telegram_message "$ELAPSED_TIME" &&
-        cat <<EOF | tee -a "$LOGS/$NAME"
+[ ! -d "$LOGS" ] && mkdir "$LOGS"
+
+MESSAGE="<b>[$WORKSPACE_OWNER]</b> $WORKSPACE_NAME"
+
+# shellcheck disable=SC2086
+if { time "$SCRIPT_DIR/$CMD" $ARGS; } 2>&1 | tee "$LOGS/$LOG_FILE"; then
+    MESSAGE="${MESSAGE} <code>(SUCCESS)</code>"
+else
+    MESSAGE="${MESSAGE} <code>(FAIL)</code>"
+fi
+
+MESSAGE="${MESSAGE}
+
+<b>Name:</b>
+<code>$NAME</code>
+
+<b>Command</b>
+<code>rodo $CMD $ARGS</code>
+
+<b>Size:</b>
+output/ <code>($(get_size_only_safe output))</code>
+  sparse/ <code>($(get_size_only_safe "output/sparse"))</code>
+$(get_size_safe output/sparse/* | indent 4)
+  dense/ <code>($(get_size_only_safe "output/dense"))</code>
+$(get_size_safe output/dense/*.ply | indent 4)
+
+<b>Time</b>
+$(tail -n3 "$LOGS/$LOG_FILE")"
+
+ELAPSED_TIME="$(grep --color=never "Elapsed time:" "$LOGS/$LOG_FILE")"
+[ -n "$ELAPSED_TIME" ] && cat <<EOF | tee -a "$LOGS/$NAME"
 ==============================================================================
 $ELAPSED_TIME
 ==============================================================================
 EOF
-}
 
-if [ "$1" = "--help" ]; then
-    print_help
-else
-    measure "$@"
-fi
+send_telegram_message "$MESSAGE" &
