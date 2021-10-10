@@ -71,7 +71,8 @@ RUN apt-get -y install \
     python3 \
     python3-numpy \
     python3-pil \
-    curl
+    curl \
+    s3cmd
 
 # Copy scripts and append them to PATH
 COPY ./scripts /scripts
