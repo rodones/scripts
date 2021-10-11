@@ -9,7 +9,8 @@ VOCAB_TREES_DIR="./docker/vocab-trees"
 
 WORK_DIR=""
 IS_TTY=0
-COND_ARGS=()
+ARGS=()
+DOCKER_COND_ARGS=()
 
 print_help() {
     cat <<EOF
@@ -56,13 +57,14 @@ while [ $# -gt 0 ]; do
         IS_TTY=1
         ;;
     *)
-        [ -n "$WORK_DIR" ] && echo "error: multiple workspaces are not allowed." && exit 1
-        
-        WORK_DIR="$1"
+        ARGS+=("$1")
         ;;
     esac
     shift
 done
+
+WORK_DIR="${ARGS[1]}"
+CMD=("${ARGS[@]:2}")
 
 if [ -z "$WORK_DIR" ]; then
     echo "error: working directory is not specified."
@@ -76,12 +78,12 @@ elif [ ! -d "$WORK_DIR/images" ]; then
 fi
 
 if [ "$IS_TTY" -eq 0 ]; then
-    COND_ARGS+=("-e" "DISPLAY" "-v" "/tmp/.X11-unix:/tmp/.X11-unix")
+    DOCKER_COND_ARGS+=("-e" "DISPLAY" "-v" "/tmp/.X11-unix:/tmp/.X11-unix")
 fi
 
 docker run \
     --rm \
-    "${COND_ARGS[@]}" \
+    "${DOCKER_COND_ARGS[@]}" \
     --user="$(id --user):$(id --group)" \
     --privileged \
     --gpus all \
@@ -91,4 +93,5 @@ docker run \
     -v "$(realpath "$VOCAB_TREES_DIR"):/vocab-trees" \
     --env-file .env \
     --env WORKSPACE_NAME="$(basename "$WORK_DIR")" \
-    -it "$ORG/$NAME:$VERSION"
+    -it "$ORG/$NAME:$VERSION" \
+    "${CMD[@]}"
