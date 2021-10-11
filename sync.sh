@@ -10,7 +10,7 @@ elif [ "$1" = "down" ]; then
     FROM="$REMOTE_ROOT/$(basename "$TO")"
 else
     echo "error: found $1, expected: up, down."
-    exit
+    exit 1
 fi
 
 echo "Are you sure to update '$TO' according to '$FROM'?"
