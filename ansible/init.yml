@@ -1,0 +1,49 @@
+---
+- name: Run colmap on remote
+  hosts: all
+  tasks:
+    - name: Install packages
+      become: yes
+      package:
+        name:
+          - s3cmd
+          - daemonize
+          - python3-docker
+        state: present
+    - name: Pull the docker image
+      community.docker.docker_image:
+        name: rodones/colmap:cpu-latest
+        source: pull
+    - name: Pull workspace repository
+      ansible.builtin.git:
+        repo: https://github.com/rodones/scripts.git
+        dest: /root/workspace
+    - name: Copy s3cmd config
+      ansible.builtin.copy:
+        src: ~/.s3cfg
+        dest: /root/.s3cfg
+    - name: Copy .env file
+      ansible.builtin.copy:
+        src: ../.env
+        dest: /root/workspace/.env
+    - name: Pull project
+      ansible.builtin.command:
+        chdir: /root/workspace
+        cmd: echo 1 | ./sync.sh down "data/{{ workspace_name }}"
+    - name: Create script to daemonize
+      copy:
+        dest: /root/workspace/task.sh
+        mode: +x
+        content: |
+          #!/usr/bin/env bash
+
+          ./start.sh --cpu --tty "data/{{ workspace_name }}" "rodo sfm -x mapper"
+          echo 1 | ./sync.sh up "data/{{ workspace_name }}"
+    - name: Run the script
+      ansible.builtin.command:
+        cmd: >-
+          /usr/bin/daemonize
+            -c /root/workspace
+            -e /root/workspace/start.log
+            -o /root/workspace/start.log
+            /root/workspace/task.sh

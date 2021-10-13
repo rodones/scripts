@@ -2,11 +2,31 @@
 
 This repository contains custom scripts, docker files, etc. 
 
+## Setup
+
+### Requirements
+- nvidia-docker (docker if cuda won't be used)
+- ansible
+    - community.docker
+- terraform
+- s3cmd
+- ffmpeg
+
+### Configuration
+- Create `.env` using [.env.example](./.env.example) and fill. This will be used by  [start.sh](./start.sh) for 
+container identification and notification purposes.
+- Create `digitalocean.auto.tfvars` using [.env.example](./terraform/digitalocean.auto.example.tfvars). This will be
+used for remote server creation on digitalocean.  
+
+## Building and Pulling Images
+
+Building process is described in [here](./docker). 
+
+The prebuilt images are published in [Docker Hub](https://hub.docker.com/repository/docker/rodones/colmap).
+
 ## Usage
 
-- Build colmap [docker](./docker) images.
-
-- Create `.env` using [.env.example](./.env.example).
+- Pull or build the [docker](./docker) image.
 
 - Start interactive session using [./start.sh](./start.sh).
 
@@ -18,6 +38,5 @@ This repository contains custom scripts, docker files, etc.
 
 ## Video to Image Convertion
 
-- Install `ffmpeg`.
-
-- Run `vid2img.sh` with input file and output folder, and optionally fps (default is 1 which means 1 frame per 1 second). (Example `./vid2img.sh ./VID_20210910_093215.mp4 ./images/ 5`)
+- Run `vid2img.sh` with input file and output folder, and optionally fps (default is 1 which means 1 frame per 1 second). 
+(Example `./vid2img.sh ./VID_20210910_093215.mp4 ./images/ 5`)
