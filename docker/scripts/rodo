@@ -82,7 +82,7 @@ $(get_size_safe output/dense/*.ply | indent 4)
 $(tail -n3 "$LOGS/$LOG_FILE")"
 
 ELAPSED_TIME="$(grep --color=never "Elapsed time:" "$LOGS/$LOG_FILE")"
-[ -n "$ELAPSED_TIME" ] && cat <<EOF | tee -a "$LOGS/$NAME"
+[ -n "$ELAPSED_TIME" ] && cat <<EOF | tee -a "$LOGS/$LOG_FILE"
 ==============================================================================
 $ELAPSED_TIME
 ==============================================================================
