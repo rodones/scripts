@@ -20,7 +20,7 @@ used for remote server creation on digitalocean.
 
 ## Building and Pulling Images
 
-Building process is described in [here](./docker). 
+Building process is described [here](./docker). 
 
 The prebuilt images are published in [Docker Hub](https://hub.docker.com/repository/docker/rodones/colmap).
 
@@ -30,7 +30,7 @@ The prebuilt images are published in [Docker Hub](https://hub.docker.com/reposit
 
 - Start interactive session using [./start.sh](./start.sh).
 
-      ./start.sh WORKSPACE [--gpu | --cpu]
+      ./start.sh WORKSPACE [[--gpu | --cpu] | --tty]
 
 - Execute scripts using `rodo` in the container.
   - Type `rodo --help` to see available scripts.
