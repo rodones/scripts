@@ -54,7 +54,7 @@ fi
 
 [ ! -d "$LOGS" ] && mkdir "$LOGS"
 
-MESSAGE="<b>[$WORKSPACE_OWNER]</b> $WORKSPACE_NAME"
+MESSAGE="<b>@$WORKSPACE_OWNER</b> $WORKSPACE_NAME"
 
 # shellcheck disable=SC2086
 if { time "$SCRIPT_DIR/$CMD" $ARGS; } 2>&1 | tee "$LOGS/$LOG_FILE"; then
