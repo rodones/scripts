@@ -9,11 +9,19 @@ SCRIPT_DIR="$(
 source "$SCRIPT_DIR/common/array.sh"
 
 PROG_NAME=$(basename "$0")
+
 BASE="/working"
+IMAGES="$BASE/images"
+OUTPUT="$BASE/output"
+DATABASE="$OUTPUT/database.db"
+SPARSE="$OUTPUT/sparse"
 VOCAB_TREES="/vocab-trees"
+
 USE_GPU="$([ -f /NGC-DL-CONTAINER-LICENSE ] && echo 1 || echo 0)"
 MATCHER="exhaustive"
 MATCHER_COND_ARGS=()
+FEATURE_EXTRACTOR_COND_ARGS=()
+MAPPER_COND_ARGS=()
 NUM_THREAD="4"
 VOCAB_TREE_PATH=""
 PIPELINE=("feature_extractor" "matcher" "mapper")
@@ -32,9 +40,10 @@ Options:
     -e, --exhaustive              use exhaustive matcher (default).
     -s, --sequential              use sequential matcher.
     -v, --vocab-tree=VT           use vocabulary tree matcher.
-  
+
   -x, --exec=STEP...              only execute given steps.
-                                  values: ${PIPELINE_VALUES[*]}             
+                                  values: ${PIPELINE_VALUES[*]}
+  -I, --images-list=FILE          new images list to register
 EOF
 }
 
@@ -51,8 +60,8 @@ EOF
 }
 
 if ! OPTIONS=$(getopt -n "$PROG_NAME" \
-    -o hcgt:sev:x: \
-    -l help,cpu,gpu,thread:,sequential,exhaustive,vocab-tree:,exec: \
+    -o hcgt:sev:x:I: \
+    -l help,cpu,gpu,thread:,sequential,exhaustive,vocab-tree:,exec:,images-list \
     -- "$@"); then
     exit
 fi
@@ -83,7 +92,7 @@ while [ $# -gt 0 ]; do
 
         [ ! -f "$VOCAB_TREE_PATH" ] && echo "error: given vocab tree '$VOCAB_TREE_PATH' does not exist." && exit 2
 
-        MATCHER_COND_ARGS+=("--VocabTreeMatching.vocab_tree_path=$VOCAB_TREE_PATH")
+        MATCHER_COND_ARGS+=("--VocabTreeMatching.vocab_tree_path" "$VOCAB_TREE_PATH")
         shift
         ;;
     -t | --thread)
@@ -103,15 +112,14 @@ while [ $# -gt 0 ]; do
         fi
         shift
         ;;
+    -I | --images-list)
+        FEATURE_EXTRACTOR_COND_ARGS+=("--image_list_path" "$2")
+        MATCHER_COND_ARGS+=("--VocabTreeMatching.match_list_path" "$2")
+        ;;
     *) ;;
     esac
     shift
 done
-
-IMAGES="$BASE/images"
-OUTPUT="$BASE/output"
-DATABASE="$OUTPUT/database.db"
-SPARSE="$OUTPUT/sparse"
 
 print_config
 
@@ -124,7 +132,8 @@ if array_contains PIPELINE "feature_extractor"; then
         --SiftExtraction.use_gpu="$USE_GPU" \
         --SiftExtraction.num_thread="$NUM_THREAD" \
         --database_path "$DATABASE" \
-        --image_path "$IMAGES"
+        --image_path "$IMAGES" \
+        "${FEATURE_EXTRACTOR_COND_ARGS[@]}"
 fi
 
 if array_contains PIPELINE "matcher"; then
@@ -141,5 +150,6 @@ if array_contains PIPELINE "mapper"; then
     colmap mapper \
         --database_path "$DATABASE" \
         --image_path "$IMAGES" \
-        --output_path "$SPARSE"
+        --output_path "$SPARSE" \
+        "${MAPPER_COND_ARGS[@]}"
 fi
