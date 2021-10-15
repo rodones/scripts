@@ -31,3 +31,4 @@ for image_id, name, data in db.execute(
 
     img.save("/working/images-keypoints/"+name)
 
+db.close()
