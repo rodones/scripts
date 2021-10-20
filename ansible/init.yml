@@ -26,6 +26,10 @@
       ansible.builtin.copy:
         src: ../.env
         dest: /root/workspace/.env
+    - name: Download vocab-tree
+      get_url:
+        url: https://demuc.de/colmap/vocab_tree_flickr100K_words256K.bin
+        dest: /root/workspace/docker/vocab-trees/256k.bin
     - name: Pull project
       ansible.builtin.command:
         chdir: /root/workspace
@@ -37,7 +41,7 @@
         content: |
           #!/usr/bin/env bash
 
-          ./start.sh --cpu --tty "data/{{ workspace_name }}" "rodo sfm -x mapper"
+          ./start.sh --cpu --tty "data/{{ workspace_name }}" "rodo sfm -v 256k"
           echo 1 | ./sync.sh up "data/{{ workspace_name }}"
     - name: Run the script
       ansible.builtin.command:

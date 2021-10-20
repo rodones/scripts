@@ -1,0 +1,33 @@
+---
+- name: Run colmap on remote
+  hosts: all
+  tasks:
+    - name: Install Docker CE
+      ansible.builtin.command:
+        cmd: curl https://get.docker.com | sh
+    - name: Enable Docker service
+      ansible.builtin.systemd:
+        name: docker
+        enabled: yes
+        masked: no
+    - name: Install NVIDIA Container Toolkit repository
+      ansible.builtin.command:
+        cmd: >-
+          distribution=$(. /etc/os-release;echo $ID$VERSION_ID) \
+          && curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add - \
+          && curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
+    - name: Update repositories cache
+      apt:
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+    - name: Install Nvidia Docker 2
+      become: yes
+      package:
+        name:
+          - nvidia-docker2
+        state: present
+    - name: Restart Docker service
+      ansible.builtin.systemd:
+        name: docker
+        state: restarted
+        daemon_reload: yes

@@ -37,6 +37,6 @@ resource "digitalocean_droplet" "server" {
 
   provisioner "local-exec" {
     when    = create
-    command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -u root -i '${self.ipv4_address},' --private-key ${var.ssh_key_pvt} -e 'pub_key=${var.ssh_key_pub}' ../ansible/init.yml"
+    command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -u root -i '${self.ipv4_address},' --private-key ${var.ssh_key_pvt} -e 'pub_key=${var.ssh_key_pub}' ../../ansible/init.yml"
   }
 }
