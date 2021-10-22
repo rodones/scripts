@@ -1,0 +1,5 @@
+google_project_id              = ""
+google_application_credentials = ""
+google_ssh_key_pub             = ""
+google_ssh_key_pvt             = ""
+google_username                = ""
