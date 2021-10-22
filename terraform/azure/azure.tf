@@ -24,6 +24,9 @@ variable "arm_client_certificate_path" {
 variable "arm_client_certificate_password" {
   type = string
 }
+variable "arm_username" {
+  type = string
+}
 variable "arm_ssh_key_pvt" {
   type = string
 }
@@ -77,15 +80,15 @@ resource "azurerm_linux_virtual_machine" "server" {
   name                = random_pet.server.id
   resource_group_name = azurerm_resource_group.server.name
   location            = azurerm_resource_group.server.location
-  size                = "Standard_NV12s_v3"
-  #   size           = "Standard_B1ls"
-  admin_username = "rodones"
+  #   size                = "Standard_B1ls"
+  size           = "Standard_NV12s_v3"
+  admin_username = var.arm_username
   network_interface_ids = [
     azurerm_network_interface.server.id,
   ]
 
   admin_ssh_key {
-    username   = "rodones"
+    username   = var.arm_username
     public_key = file(var.arm_ssh_key_pub)
   }
 
@@ -103,13 +106,20 @@ resource "azurerm_linux_virtual_machine" "server" {
 
   provisioner "local-exec" {
     when    = create
-    command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -u rodones -i '${self.public_ip_address},' --private-key ${var.arm_ssh_key_pvt} -e 'pub_key=${var.arm_ssh_key_pub}' ../../ansible/nvidia-docker.yml"
+    command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -u ${var.arm_username} -i '${self.public_ip_address},' --private-key ${var.arm_ssh_key_pvt} -e 'pub_key=${var.arm_ssh_key_pub}' ../../ansible/nvidia-docker.yml"
   }
 
   #   provisioner "local-exec" {
   #     when    = create
   #     command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -u rodones -i '${self.public_ip_address},' --private-key ${var.arm_ssh_key_pvt} -e 'pub_key=${var.arm_ssh_key_pub}' ../../ansible/init.yml"
   #   }
+}
+
+output "host" {
+  value = azurerm_linux_virtual_machine.server.public_ip_address
+}
+output "username" {
+  value = var.arm_username
 }
 
 /*
