@@ -40,3 +40,10 @@ resource "digitalocean_droplet" "server" {
     command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -u root -i '${self.ipv4_address},' --private-key ${var.ssh_key_pvt} -e 'pub_key=${var.ssh_key_pub}' ../../ansible/init.yml"
   }
 }
+
+output "host" {
+  value = digitalocean_droplet.ipv4_address
+}
+output "username" {
+  value = "root"
+}
