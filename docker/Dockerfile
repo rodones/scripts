@@ -1,6 +1,11 @@
+# ============================================================
+# BUILD STAGE
+# ============================================================
+
 # Change according to CUDA support
 ARG BASE_IMAGE
-FROM $BASE_IMAGE
+ARG BASE_IMAGE_BUILD
+FROM $BASE_IMAGE_BUILD AS builder
 
 # Prevent stop building ubuntu at time zone selection.
 ARG DEBIAN_FRONTEND=noninteractive
@@ -8,18 +13,10 @@ ARG DEBIAN_FRONTEND=noninteractive
 # Colmap build options
 ARG CUDA_ENABLED=OFF
 
-# Create user and group of the host
-ARG USERNAME=rodones
-ARG UID=1000
-ARG GID=1000
-RUN groupadd -g $GID -o $USERNAME
-RUN useradd -m -u $UID -g $GID -o -s /bin/bash $USERNAME
-
-# Prepare and empty machine for building
+# Install build dependencies
 RUN apt-get update && apt-get install -y \
     git \
     cmake \
-    vim \
     build-essential \
     libboost-program-options-dev \
     libboost-filesystem-dev \
@@ -35,12 +32,10 @@ RUN apt-get update && apt-get install -y \
     qtbase5-dev \
     libqt5opengl5-dev \
     libcgal-dev \
-    libcgal-qt5-dev
+    libcgal-qt5-dev \
+    libatlas-base-dev
 
-# Build and install ceres solver
-RUN apt-get -y install \
-    libatlas-base-dev \
-    libsuitesparse-dev
+# Build and install ceres solver    
 RUN git clone https://github.com/ceres-solver/ceres-solver.git --branch 1.14.0
 RUN cd ceres-solver && \
     mkdir build && \
@@ -49,15 +44,8 @@ RUN cd ceres-solver && \
     make -j4 && \
     make install
 
-# Build and install COLMAP
-
-# Note: This Dockerfile has been tested using COLMAP pre-release 3.6.
-# Later versions of COLMAP (which will be automatically cloned as default) may
-# have problems using the environment described thus far. If you encounter
-# problems and want to install the tested release, then uncomment the branch
-# specification in the line below
-RUN git clone https://github.com/colmap/colmap.git #--branch 3.6
-
+# Build COLMAP
+RUN git clone https://github.com/colmap/colmap.git
 RUN cd colmap && \
     git checkout dev && \
     mkdir build && \
@@ -66,13 +54,41 @@ RUN cd colmap && \
     make -j4 && \
     make install
 
+# ============================================================
+# WORKSPACE STAGE
+# ============================================================
+
+FROM $BASE_IMAGE
+
+# Install colmap dependencies
+RUN apt-get update && apt-get install -y \
+    libglew2.0 \
+    libfreeimage3 \
+    libgoogle-glog0v5 \
+    libceres1 \
+    libopengl0 \
+    libqt5widgets5 \
+    libcgal13 \
+    libgl1
+
 # Install rodo dependencies
-RUN apt-get -y install \
+RUN apt-get update && apt-get install -y \
     python3 \
     python3-numpy \
     python3-pil \
     curl \
     s3cmd
+
+# Copy colmap binary and scripts
+COPY --from=builder /colmap/build/src/exe/colmap /usr/bin/colmap
+COPY --from=builder /colmap/scripts /colmap/scripts
+
+# Create user and group of the host
+ARG USERNAME=rodones
+ARG UID=1000
+ARG GID=1000
+RUN groupadd -g $GID -o $USERNAME
+RUN useradd -m -u $UID -g $GID -o -s /bin/bash $USERNAME
 
 # Copy scripts and append them to PATH
 COPY ./scripts /scripts
