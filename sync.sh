@@ -7,7 +7,7 @@ if [ "$1" = "up" ]; then
     TO="$REMOTE_ROOT/$(basename "$FROM")/"
 elif [ "$1" = "down" ]; then
     TO="${2%/}/"
-    FROM="$REMOTE_ROOT/$(basename "$TO")"
+    FROM="$REMOTE_ROOT/$(basename "$TO")/"
 else
     echo "error: found $1, expected: up, down."
     exit 1
