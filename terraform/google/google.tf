@@ -32,26 +32,28 @@ provider "google" {
   zone        = "us-central1-c"
 }
 
-
-/*
-us-central1
-- k80 + 4core + 15gb ram : $0.35/h -> 857 hours
-- t4  + 4core + 15gb ram : $0.38/h -> 789 hours
-- p4  + 4core + 15gb ram : $0.55/h -> 545 hours
-*/
-
 locals {
   ip = google_compute_instance.server.network_interface.0.access_config.0.nat_ip
 }
 
 resource "google_compute_instance" "server" {
   name         = random_pet.server.id
-  machine_type = "f1-micro"
+  machine_type = "n1-standard-4"
+
+  guest_accelerator {
+    type  = "nvidia-tesla-t4"
+    count = 1
+  }
 
   boot_disk {
     initialize_params {
       image = "ubuntu-2004-lts"
+      size = 100
     }
+  }
+
+  scheduling {
+    on_host_maintenance = "TERMINATE"
   }
 
   network_interface {
