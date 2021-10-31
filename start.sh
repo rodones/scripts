@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+PROG_NAME="$(basename "$0")"
+
 ORG="rodones"
 NAME="colmap"
 VERSION="gpu-latest"
@@ -8,31 +10,25 @@ SCRIPTS_DIR="./docker/scripts"
 VOCAB_TREES_DIR="./docker/vocab-trees"
 
 WORK_DIR=""
-IS_TTY=0
+IS_TTY=1
+USE_GPU=1
 ARGS=()
 DOCKER_COND_ARGS=()
 
 print_help() {
     cat <<EOF
-$PROG_NAME [OPTION...] FOLDER
-Rodones COLMAP structure-from-motion script
+$PROG_NAME [OPTION...] FOLDER [CMD]
+Rodones Docker starter
 Options:
-  Hardware:
-    -c, --cpu                     use cpu instead of gpu. $([ "$USE_GPU" = "0" ] && echo "(default)")
-    -g, --gpu                     use gpu with cuda toolkit. $([ "$USE_GPU" = "1" ] && echo "(default)")
-    -t, --thread=N                use N threads if possible.
-  Matchers:
-    -e, --exhaustive              use exhaustive matcher (default).
-    -s, --sequential              use sequential matcher.
-    -v, --vocab-tree=VT           use vocabulary tree matcher.
-  
-  -x, --exec=STEP...              only execute given steps.
+  -c, --cpu                     use cpu variant
+  -g, --gpu                     use gpu variant
+  -T, --no-tty                  disable tty
 EOF
 }
 
 if ! OPTIONS=$(getopt -n "$PROG_NAME" \
-    -o hcgt \
-    -l help,cpu,gpu,tty \
+    -o hcgT \
+    -l help,cpu,gpu,no-tty \
     -- "$@"); then
     exit
 fi
@@ -47,14 +43,12 @@ while [ $# -gt 0 ]; do
         ;;
     -c | --cpu)
         USE_GPU=0
-        VERSION="cpu-latest"
         ;;
     -g | --gpu)
         USE_GPU=1
-        VERSION="gpu-latest"
         ;;
-    -t | --tty)
-        IS_TTY=1
+    -T | --no-tty)
+        IS_TTY=0
         ;;
     *)
         ARGS+=("$1")
@@ -77,21 +71,28 @@ elif [ ! -d "$WORK_DIR/images" ]; then
     exit 4
 fi
 
-if [ "$IS_TTY" -eq 0 ]; then
-    DOCKER_COND_ARGS+=("-e" "DISPLAY" "-v" "/tmp/.X11-unix:/tmp/.X11-unix")
+if [ "$USE_GPU" -eq 1 ]; then
+    VERSION="gpu-latest"
+    DOCKER_COND_ARGS+=("--gpus" "all")
+else
+    VERSION="cpu-latest"
 fi
+
+if [ "$IS_TTY" -eq 1 ]; then
+    DOCKER_COND_ARGS+=("-e" "DISPLAY" "-v" "/tmp/.X11-unix:/tmp/.X11-unix" "-t")
+fi
+
 
 docker run \
     --rm \
     "${DOCKER_COND_ARGS[@]}" \
     --user="$(id --user):$(id --group)" \
     --privileged \
-    --gpus all \
     -w /working \
     -v "$(realpath "$WORK_DIR"):/working" \
     -v "$(realpath "$SCRIPTS_DIR"):/scripts" \
     -v "$(realpath "$VOCAB_TREES_DIR"):/vocab-trees" \
     --env-file .env \
     --env WORKSPACE_NAME="$(basename "$WORK_DIR")" \
-    -it "$ORG/$NAME:$VERSION" \
+    -i "$ORG/$NAME:$VERSION" \
     "${CMD[@]}"
