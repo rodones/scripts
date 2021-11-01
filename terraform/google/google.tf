@@ -37,8 +37,9 @@ locals {
 }
 
 resource "google_compute_instance" "server" {
-  name         = random_pet.server.id
-  machine_type = "n1-standard-4"
+  name           = random_pet.server.id
+  machine_type   = "n1-standard-8"
+  enable_display = true
 
   guest_accelerator {
     type  = "nvidia-tesla-t4"
@@ -48,7 +49,7 @@ resource "google_compute_instance" "server" {
   boot_disk {
     initialize_params {
       image = "ubuntu-2004-lts"
-      size = 100
+      size  = 100
     }
   }
 
@@ -70,10 +71,10 @@ resource "google_compute_instance" "server" {
     ssh-keys = "${var.google_username}:${file(var.google_ssh_key_pub)}"
   }
 
-  provisioner "local-exec" {
-    when    = create
-    command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -u ${var.google_username} -i '${self.network_interface.0.access_config.0.nat_ip},' --private-key ${var.google_ssh_key_pvt} -e 'pub_key=${var.google_ssh_key_pub}' ../../ansible/nvidia-docker.yml"
-  }
+  #   provisioner "local-exec" {
+  #     when    = create
+  #     command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -u ${var.google_username} -i '${self.network_interface.0.access_config.0.nat_ip},' --private-key ${var.google_ssh_key_pvt} -e 'pub_key=${var.google_ssh_key_pub}' ../../ansible/nvidia-docker.yml"
+  #   }
 
   #   provisioner "local-exec" {
   #     when    = create
