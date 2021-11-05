@@ -33,16 +33,8 @@ RUN apt-get update && apt-get install -y \
     libqt5opengl5-dev \
     libcgal-dev \
     libcgal-qt5-dev \
-    libatlas-base-dev
-
-# Build and install ceres solver    
-RUN git clone https://github.com/ceres-solver/ceres-solver.git --branch 1.14.0
-RUN cd ceres-solver && \
-    mkdir build && \
-    cd build && \
-    cmake .. -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF && \
-    make -j4 && \
-    make install
+    libatlas-base-dev \
+    libceres-dev
 
 # Build COLMAP
 RUN git clone https://github.com/colmap/colmap.git

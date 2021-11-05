@@ -1,53 +1,82 @@
 ---
-- name: Run colmap on remote
+- name: Prepare repositories
   hosts: all
   tasks:
-    - name: Install packages
+    - name: Download docker repository key
+      uri:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        return_content: yes
+      register: docker_keyring
+    - name: Import docker repository key
+      become: yes
+      shell:
+        cmd: gpg --yes --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+        stdin: "{{ docker_keyring.content }}"
+    - name: Install docker repository
+      shell:
+        cmd: >
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" \
+          | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+    - name: Update repositories
+      become: yes
+      apt:
+        update_cache: yes
+- name: Install dependencies
+  hosts: all
+  tasks:
+    - name: Install packages using package manager
       become: yes
       package:
         name:
-          - s3cmd
-          - daemonize
           - python3-docker
+          - daemonize
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - s4cmd
         state: present
+- name: Configure docker
+  hosts: all
+  tasks:
+  - name: Create docker group
+    group:
+      name: docker
+      state: present
+  - name: Add user to docker group
+    become: yes
+    user:
+      name: "{{ ansible_user }}"
+      groups: docker
+      append: yes
+  - name: Enable docker service
+    systemd:
+      name: docker.service
+      enabled: yes
+      masked: no
+    become: yes
+  - name: Enable containerd service
+    systemd:
+      name: containerd.service
+      enabled: yes
+      masked: no
+    become: yes
+- name: Prepare environment
+  hosts: all
+  tasks:
     - name: Pull the docker image
+      become: yes
       community.docker.docker_image:
         name: rodones/colmap:cpu-latest
         source: pull
     - name: Pull workspace repository
-      ansible.builtin.git:
+      git:
         repo: https://github.com/rodones/scripts.git
-        dest: /root/workspace
-    - name: Copy s3cmd config
-      ansible.builtin.copy:
-        src: ~/.s3cfg
-        dest: /root/.s3cfg
+        dest: ~/workspace
     - name: Copy .env file
-      ansible.builtin.copy:
+      copy:
         src: ../.env
-        dest: /root/workspace/.env
+        dest: ~/workspace/.env
     - name: Download vocab-tree
       get_url:
         url: https://demuc.de/colmap/vocab_tree_flickr100K_words256K.bin
-        dest: /root/workspace/docker/vocab-trees/256k.bin
-    - name: Pull project
-      ansible.builtin.command:
-        chdir: /root/workspace
-        cmd: echo 1 | ./sync.sh down "data/{{ workspace_name }}"
-    - name: Create script to daemonize
-      copy:
-        dest: /root/workspace/task.sh
-        mode: +x
-        content: |
-          #!/usr/bin/env bash
-
-          ./start.sh --cpu --tty "data/{{ workspace_name }}" "rodo sfm -v 256k"
-          echo 1 | ./sync.sh up "data/{{ workspace_name }}"
-    - name: Run the script
-      ansible.builtin.command:
-        cmd: >-
-          /usr/bin/daemonize
-            -c /root/workspace
-            -e /root/workspace/start.log
-            -o /root/workspace/start.log
-            /root/workspace/task.sh
+        dest: ~/workspace/docker/vocab-trees/256.bin

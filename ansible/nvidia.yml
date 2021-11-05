@@ -1,0 +1,58 @@
+---
+- name: Install CUDA Toolkit
+  hosts: all
+  become: yes
+  tasks:
+    - name: Install kernel headers
+      package:
+        name:
+          - "linux-headers-{{ ansible_kernel }}"
+        state: present
+    - name: Download repository preference
+      get_url:
+        url: https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/cuda-ubuntu1804.pin
+        dest: /etc/apt/preferences.d/cuda-repository-pin-600
+    - name: Add NVIDIA CUDA key
+      apt_key:
+        url: https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub
+    - name: Add NVIDIA CUDA repository
+      apt_repository:
+        repo: deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/ /
+        state: present
+    - name: Update repositories
+      apt:
+        update_cache: yes
+    - name: Install packages
+      package:
+        name:
+          - cuda
+        state: present
+- name: Install NVIDIA Docker 2
+  hosts: all
+  become: yes
+  tasks:
+    - name: Enable Docker service
+      systemd:
+        name: docker
+        enabled: yes
+        masked: no
+    - name: Install NVIDIA Container Toolkit repository
+      shell:
+        cmd: >
+          distribution="$(. /etc/os-release;echo $ID$VERSION_ID)"
+          repo_file="/etc/apt/sources.list.d/nvidia-docker.list"
+          && curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
+          && curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee $repo_file
+    - name: Update repositories cache
+      apt:
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+    - name: Install Nvidia Docker 2
+      package:
+        name:
+          - nvidia-docker2
+        state: present
+    - name: Restart Docker service
+      systemd:
+        name: docker
+        state: restarted
