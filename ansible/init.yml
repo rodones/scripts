@@ -63,11 +63,6 @@
 - name: Prepare environment
   hosts: all
   tasks:
-    - name: Pull the docker image
-      become: yes
-      community.docker.docker_image:
-        name: rodones/colmap:cpu-latest
-        source: pull
     - name: Pull workspace repository
       git:
         repo: https://github.com/rodones/scripts.git
