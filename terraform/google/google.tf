@@ -38,7 +38,7 @@ locals {
 
 resource "google_compute_instance" "server" {
   name           = random_pet.server.id
-  machine_type   = "n1-standard-8"
+  machine_type   = "n1-highmem-8"
   enable_display = true
 
   guest_accelerator {
@@ -49,8 +49,13 @@ resource "google_compute_instance" "server" {
   boot_disk {
     initialize_params {
       image = "ubuntu-2004-lts"
-      size  = 100
+      size  = 50
+      type = "pd-balanced"
     }
+  }
+  
+  attached_disk {
+    source = "workspace"
   }
 
   scheduling {
