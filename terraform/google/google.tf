@@ -74,6 +74,16 @@ resource "google_compute_instance" "server" {
 
   metadata = {
     ssh-keys = "${var.google_username}:${file(var.google_ssh_key_pub)}"
+#     startup-script = <<-EOF
+# #!/bin/bash
+# DEVICE_FS=`blkid -o value -s TYPE /dev/sdb`
+# if [ "`echo -n $DEVICE_FS`" == "" ] ; then
+#         mkfs.ext4 /dev/sdb
+# fi
+# mkdir -p /data
+# echo '/dev/sdb /data ext4 defaults 0 0' >> /etc/fstab
+# mount /data
+# EOF
   }
 
   #   provisioner "local-exec" {

@@ -7,31 +7,27 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     cmake \
     git \
-    libboost-all-dev
+    libboost-all-dev \
+    libtbb-dev \
+    cloudcompare
 
-RUN git clone https://github.com/LASzip/LASzip.git; \
-    cd LASzip; \
-    mkdir build && cd build; \
-    cmake .. \
-        -DCMAKE_BUILD_TYPE="Release" \
-        -DCMAKE_INSTALL_PREFIX=/usr; \
-    make && make install && ldconfig; \
-    cd /; \
-    rm -rf LASzip
-
-RUN mkdir /PotreeConverter
-
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libtbb-dev
-
-RUN git clone https://github.com/potree/PotreeConverter /PotreeConverter; \
-    cd /PotreeConverter && mkdir build && cd build; \
+RUN git clone https://github.com/LASzip/LASzip.git /tmp/LASzip && \
+    cd /tmp/LASzip && \
+    mkdir build && cd build && \
     cmake .. \
         -DCMAKE_BUILD_TYPE=Release \
-        -DLASZIP_INCLUDE_DIRS=/usr/include/laszip \
-        -DLASZIP_LIBRARY=/usr/lib/liblaszip.so \
-        -DCMAKE_INSTALL_PREFIX=/usr; \
-    make
+        -DCMAKE_INSTALL_PREFIX=/usr && \
+    make && make install && ldconfig && \
+    rm -rf /tmp/LASzip 
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    cloudcompare
+RUN git clone https://github.com/potree/PotreeConverter /tmp/PotreeConverter; \
+    cd /tmp/PotreeConverter && \ 
+    mkdir build && \
+    cd build && \
+    cmake .. \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/usr; \
+    make && \
+    mkdir /opt/PotreeConverter && \
+    cp -r Converter/ resources/ liblaszip.so PotreeConverter /opt/PotreeConverter && \
+    rm -rf /tmp/PotreeConverter
