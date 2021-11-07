@@ -6,8 +6,8 @@ ORG="rodones"
 NAME="colmap"
 VERSION="gpu-latest"
 
-SCRIPTS_DIR="./docker/scripts"
-VOCAB_TREES_DIR="./docker/vocab-trees"
+SCRIPTS_DIR="./docker/colmap/scripts"
+VOCAB_TREES_DIR="./docker/colmap/vocab-trees"
 
 WORK_DIR=""
 IS_TTY=1
