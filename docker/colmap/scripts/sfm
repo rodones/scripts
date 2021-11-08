@@ -29,7 +29,7 @@ PIPELINE_VALUES=("feature_extractor" "matcher" "mapper")
 
 usage() {
     cat <<EOF
-$PROG_NAME [[-c|-g] -t N] [-e|-s|-v VT] [-x STEP [STEP]...]
+$PROG_NAME [[-c|-g] -t N] [-e|-s|-v VT] [-x STEP [STEP]...] [-S]
 Rodones COLMAP structure-from-motion script
 Options:
   Hardware:
@@ -41,6 +41,7 @@ Options:
     -s, --sequential              use sequential matcher.
     -v, --vocab-tree=VT           use vocabulary tree matcher.
 
+  -S, --summary                   creates a log file under output/logs.
   -x, --exec=STEP...              only execute given steps.
                                   values: ${PIPELINE_VALUES[*]}
   -I, --images-list=FILE          new images list to register
@@ -60,11 +61,18 @@ EOF
 }
 
 if ! OPTIONS=$(getopt -n "$PROG_NAME" \
-    -o hcgt:sev:x:I: \
-    -l help,cpu,gpu,thread:,sequential,exhaustive,vocab-tree:,exec:,images-list \
+    -o hcgt:sev:x:I:S \
+    -l help,cpu,gpu,thread:,sequential,exhaustive,vocab-tree:,exec:,images-list,summary \
     -- "$@"); then
     exit
 fi
+
+summary(){
+    if [ ! -d $OUTPUT/logs ]; then 
+        mkdir $OUTPUT/logs 
+    fi
+    python3 ..$SCRIPT_DIR/sfm-summary-logger.py
+}
 
 eval set -- "$OPTIONS"
 
@@ -72,6 +80,10 @@ while [ $# -gt 0 ]; do
     case $1 in
     -h | --help)
         usage
+        exit
+        ;;
+    -S | --summary)
+        summary
         exit
         ;;
     -c | --cpu)
