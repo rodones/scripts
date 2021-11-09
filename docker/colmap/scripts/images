@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from os import listdir, write
+from os import listdir
 from os.path import join
 from argparse import ArgumentParser
 from itertools import chain
@@ -57,9 +57,10 @@ def main():
     args = get_args()
 
     models = dict([
-        (model_id, set([image.name for image in read_images_binary(join(sparse, str(model_id), "images.bin")).values()]))
+        (model_id, set([image.name for image in read_images_binary(
+            join(sparse, str(model_id), "images.bin")).values()]))
         for model_id in args.models
-    ])
+        ])
 
     if args.used:
         print_sorted_list(get_used_images(models))

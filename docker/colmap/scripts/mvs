@@ -55,16 +55,24 @@ Options:
   -f, --filter[=B]                enables filtering patch_match_stereo step. (default: $FILTER)
   -M, --max-image-size=N          sets maximum image size for image_undistorter step. (default: $MAX_IMAGE_SIZE)
   -e, --exec=STEP...              executes only given steps.
+  -S, --summary                   creates a log file under output/logs
                                   values: ${PIPELINE_VALUES[*]}
 EOF
 }
 
 if ! OPTIONS=$(getopt -n "$PROG_NAME" \
-    -o hm:i:s:f::gpM:x: \
-    -l help,model:,iteration:,step:,filter::,geometric,photometric,max-image-size:,exec: \
+    -o hm:i:s:f::gpM:x:S \
+    -l help,model:,iteration:,step:,filter::,geometric,photometric,max-image-size:,exec:,summary \
     -- "$@"); then
     exit
 fi
+
+summary(){
+    if [ ! -d $OUTPUT/logs ]; then 
+        mkdir $OUTPUT/logs 
+    fi
+    python3 ..$SCRIPT_DIR/mvs-summary-logger.py
+}
 
 eval set -- "$OPTIONS"
 
@@ -72,6 +80,10 @@ while [ $# -gt 0 ]; do
     case $1 in
     -h | --help)
         print_usage
+        exit
+        ;;
+    -S | --summary)
+        summary
         exit
         ;;
     -m | --model)
