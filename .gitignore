@@ -2,4 +2,3 @@ drive/
 .env*
 !.env.example
 MeshLab.AppImage
-docker/vocab-trees
