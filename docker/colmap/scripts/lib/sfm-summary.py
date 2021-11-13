@@ -1,14 +1,21 @@
+#!/usr/bin/env python3
+
+from os.path import join
 import sqlite3
 from datetime import datetime
 
+BASE_DIR = join("/", "working")
+LOGS_DIR = join(BASE_DIR, "logs")
+DB_PATH = join(BASE_DIR, "output", "database.db")
+
 
 def prepare_sfm_keypoints():
-    db = sqlite3.connect("output/database.db")
+    db = sqlite3.connect(DB_PATH)
     today = datetime.now()
     date_str = "{}-{}-{}_{}-{}-{}".format(today.year, today.month,
                                           today.day, today.hour,
                                           today.minute, today.second)
-    log_file = open("output/logs/sfm_"+date_str+".txt", "w")
+    log_file = open(join(LOGS_DIR, f"sfm_{date_str}.txt"), "w")
 
     log_file.write("{}\t{}\t{}\n"
                    .format("image_id", "image_name".ljust(30), "keypoints"))

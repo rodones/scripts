@@ -1,17 +1,23 @@
+#!/usr/bin/env python3
+
 from os import listdir
 from os.path import isfile, join
 import sqlite3
 from datetime import datetime
-from .lib.reader import r_readlines
-from .lib.dict_entry import DictionaryEntry
+from lib.reader import r_readlines
+from lib.dict_entry import DictionaryEntry
+
+BASE_DIR = join("/", "working")
+LOGS_DIR = join(BASE_DIR, "logs")
+DB_PATH = join(BASE_DIR, "output", "database.db")
 
 
 def choose_last_log() -> str:
 
     name_last = "mvs_0000-00-00_00-00-00.txt"
 
-    for f in listdir("logs"):
-        if(isfile(join("logs", f))):
+    for f in listdir(LOGS_DIR):
+        if(isfile(join(LOGS_DIR, f))):
             if(f.split("_")[0] == "mvs"):
                 if(compare_names(f, name_last)):
                     name_last = f
@@ -53,7 +59,7 @@ def read_kp(line: str):
 
 def prepare_mvs_keypoints():
 
-    db = sqlite3.connect("output/database.db")
+    db = sqlite3.connect(DB_PATH)
 
     count = [f for f in db.execute("SELECT COUNT(*) FROM images")][0][0]
 
@@ -69,7 +75,7 @@ def prepare_mvs_keypoints():
 
     last_log = choose_last_log()
 
-    gen = r_readlines("logs/"+last_log)
+    gen = r_readlines(join(LOGS_DIR, last_log))
 
     index = 0
     kp = 0
@@ -93,7 +99,7 @@ def prepare_mvs_keypoints():
     date_str = "{}-{}-{}_{}-{}-{}".format(today.year, today.month,
                                           today.day, today.hour,
                                           today.minute, today.second)
-    log_file = open("output/logs/mvs_"+date_str+".txt", "w")
+    log_file = open(join(LOGS_DIR, "mvs_"+date_str+".txt"), "w")
 
     log_file.write("{}\t{}{:>10}{:>10}\n".format("image_id",
                                                  "image_name".ljust(30),
