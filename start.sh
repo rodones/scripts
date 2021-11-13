@@ -11,7 +11,7 @@ VOCAB_TREES_DIR="./docker/colmap/vocab-trees"
 
 WORK_DIR=""
 IS_TTY=1
-USE_GPU=1
+VARIANT="gpu"
 ARGS=()
 DOCKER_COND_ARGS=()
 
@@ -22,13 +22,14 @@ Rodones Docker starter
 Options:
   -c, --cpu                     use cpu variant
   -g, --gpu                     use gpu variant
+  -d, --dev                     use development variant
   -T, --no-tty                  disable tty
 EOF
 }
 
 if ! OPTIONS=$(getopt -n "$PROG_NAME" \
-    -o hcgT \
-    -l help,cpu,gpu,no-tty \
+    -o hcgdT \
+    -l help,cpu,gpu,dev,no-tty \
     -- "$@"); then
     exit
 fi
@@ -42,10 +43,13 @@ while [ $# -gt 0 ]; do
         exit
         ;;
     -c | --cpu)
-        USE_GPU=0
+        VARIANT="cpu"
         ;;
     -g | --gpu)
-        USE_GPU=1
+        VARIANT="gpu"
+        ;;
+    -d | --dev)
+        VARIANT="dev"
         ;;
     -T | --no-tty)
         IS_TTY=0
@@ -71,17 +75,18 @@ elif [ ! -d "$WORK_DIR/images" ]; then
     exit 4
 fi
 
-if [ "$USE_GPU" -eq 1 ]; then
+if [ "$VARIANT" == "gpu" ]; then
     VERSION="gpu-latest"
     DOCKER_COND_ARGS+=("--gpus" "all")
-else
+elif [ "$VARIANT" == "cpu" ]; then
     VERSION="cpu-latest"
+elif [ "$VARIANT" == "dev" ]; then
+    VERSION="test"
 fi
 
 if [ "$IS_TTY" -eq 1 ]; then
     DOCKER_COND_ARGS+=("-e" "DISPLAY" "-v" "/tmp/.X11-unix:/tmp/.X11-unix" "-t")
 fi
-
 
 docker run \
     --rm \

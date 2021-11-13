@@ -32,9 +32,5 @@ def prepare_sfm_keypoints():
     db.close()
 
 
-def main() -> None:
+if __name__ == '__main__':
     prepare_sfm_keypoints()
-
-
-if __name__ == 'main':
-    main()

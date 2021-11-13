@@ -1,10 +1,13 @@
+#!/usr/bin/env python3
 
 import os
 from typing import Generator
 
 
 def r_readlines(filename: str, buf_size: int = 8192) -> Generator:
-    """A generator that returns the lines of a file in reverse order"""
+    """A generator that returns the lines of a file in reverse order
+
+    source: https://stackoverflow.com/a/23646049"""
     with open(filename) as fh:
         segment = None
         offset = 0

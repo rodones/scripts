@@ -8,6 +8,7 @@ SCRIPT_DIR="$(
 ORG="rodones"
 NAME="colmap"
 VERSION="latest"
+DOCKER_FILE="$SCRIPT_DIR/Dockerfile"
 
 CUDA_ENABLED=""
 
@@ -29,6 +30,9 @@ elif [ "$1" = "--without-cuda" ]; then
     VERSION="cpu-$VERSION"
     BASE_IMAGE="$BASE_IMAGE_WITHOUT_CUDA"
     BASE_IMAGE_BUILD="$BASE_IMAGE_BUILD_WITHOUT_CUDA"
+elif [ "$1" = "--test" ]; then
+    DOCKER_FILE="$SCRIPT_DIR/Dockerfile.test"
+    VERSION="test"
 else
     echo "error: please specify build type with --with-cuda or --without-cuda."
     exit 1
@@ -41,4 +45,5 @@ docker build \
     --build-arg BASE_IMAGE="$BASE_IMAGE" \
     --build-arg BASE_IMAGE_BUILD="$BASE_IMAGE_BUILD" \
     -t "$ORG/$NAME:$VERSION" \
+    -f "$DOCKER_FILE" \
     "$SCRIPT_DIR"

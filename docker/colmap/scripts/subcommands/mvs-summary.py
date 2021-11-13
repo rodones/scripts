@@ -1,11 +1,25 @@
 #!/usr/bin/env python3
 
+import sqlite3
 from os import listdir
 from os.path import isfile, join
-import sqlite3
 from datetime import datetime
-from lib.reader import r_readlines
-from lib.dict_entry import DictionaryEntry
+from common.file import r_readlines
+
+
+class DictionaryEntry:
+    image_name: str
+    image_id: int
+    sfm_keypoint: int
+    mvs_keypoint: int
+
+    def __init__(self, name: str = "", id: int = 0,
+                 sfm: int = 0, mvs: int = 0) -> None:
+        self.image_name = name
+        self.mvs_keypoint = mvs
+        self.image_id = id
+        self.sfm_keypoint = sfm
+
 
 BASE_DIR = join("/", "working")
 LOGS_DIR = join(BASE_DIR, "logs")
@@ -113,9 +127,5 @@ def prepare_mvs_keypoints():
     db.close()
 
 
-def main() -> None:
+if __name__ == '__main__':
     prepare_mvs_keypoints()
-
-
-if __name__ == 'main':
-    main()

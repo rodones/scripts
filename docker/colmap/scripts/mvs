@@ -79,7 +79,7 @@ while [ $# -gt 0 ]; do
         exit
         ;;
     -S | --summary)
-        ./lib/mvs-summary.py
+        "$SCRIPT_DIR/subcommands/mvs-summary.py"
         exit
         ;;
     -m | --model)
