@@ -88,4 +88,4 @@ $ELAPSED_TIME
 ==============================================================================
 EOF
 
-send_telegram_message "$MESSAGE" &
+send_telegram_message "$MESSAGE"
