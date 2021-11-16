@@ -113,7 +113,7 @@ def prepare_mvs_keypoints():
                                         "mvs", "sfm"))
 
     for entry in dict:
-        print("{: 6}\t{}{:>10}{:>10}\n"
+        print("{: 6}\t{}{:>10}{:>10}"
               .format(entry.image_id+1, entry.image_name.ljust(30),
                       entry.mvs_keypoint, entry.sfm_keypoint))
     db.close()

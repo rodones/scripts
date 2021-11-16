@@ -19,7 +19,7 @@ def prepare_sfm_keypoints():
             "JOIN images as imgs " +
             "ON imgs.image_id = kp.image_id " +
             "ORDER BY kp.rows"):
-        print("{: 6}\t{}\t{}\n"
+        print("{: 6}\t{}\t{}"
               .format(image_id, name.ljust(30), data))
 
     db.close()
