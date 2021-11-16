@@ -22,7 +22,7 @@ def prepare_sfm_keypoints():
                 "ORDER BY kp.rows"):
             print("{: 6}\t{}\t{}".format(image_id, name.ljust(30), data),
                   flush=True)
-    except BrokenPipeError:
+    except (BrokenPipeError, IOError):
         pass
     db.close()
 
