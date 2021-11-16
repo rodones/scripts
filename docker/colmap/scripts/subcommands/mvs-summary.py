@@ -3,7 +3,6 @@
 import sqlite3
 from os import listdir
 from os.path import isfile, join
-from datetime import datetime
 from common.file import r_readlines
 
 
@@ -109,21 +108,14 @@ def prepare_mvs_keypoints():
             index = read_index(line)
     gen.close()
 
-    today = datetime.now()
-    date_str = "{}-{}-{}_{}-{}-{}".format(today.year, today.month,
-                                          today.day, today.hour,
-                                          today.minute, today.second)
-    log_file = open(join(LOGS_DIR, "mvs_"+date_str+".txt"), "w")
-
-    log_file.write("{}\t{}{:>10}{:>10}\n".format("image_id",
-                                                 "image_name".ljust(30),
-                                                 "mvs", "sfm"))
+    print("{}\t{}{:>10}{:>10}\n".format("image_id",
+                                        "image_name".ljust(30),
+                                        "mvs", "sfm"))
 
     for entry in dict:
-        log_file.write("{: 6}\t{}{:>10}{:>10}\n"
-                       .format(entry.image_id+1, entry.image_name.ljust(30),
-                               entry.mvs_keypoint, entry.sfm_keypoint))
-    log_file.close()
+        print("{: 6}\t{}{:>10}{:>10}\n"
+              .format(entry.image_id+1, entry.image_name.ljust(30),
+                      entry.mvs_keypoint, entry.sfm_keypoint))
     db.close()
 
 
