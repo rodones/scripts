@@ -1,9 +1,14 @@
 #!/usr/bin/env bash
 
+SCRIPT_DIR="$(
+    cd -- "$(dirname "$0")" >/dev/null 2>&1 || exit
+    pwd -P
+)"
+
 # Load environment variables
 # TODO: handle hashtags
 # shellcheck disable=SC2046
-export $(grep -e AWS_ -e S3_ .env | xargs)
+export $(grep -e AWS_ -e S3_ "$SCRIPT_DIR/.env" | xargs)
 export RODONES_ENV=1
 
 alias s4cmd='s4cmd --endpoint-url $S3_ENDPOINT_URL'
