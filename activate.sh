@@ -4,6 +4,7 @@
 # TODO: handle hashtags
 # shellcheck disable=SC2046
 export $(grep -e AWS_ -e S3_ .env | xargs)
+export RODONES_ENV=1
 
 alias s4cmd='s4cmd --endpoint-url $S3_ENDPOINT_URL'
 
