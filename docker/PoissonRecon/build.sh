@@ -6,7 +6,7 @@ SCRIPT_DIR="$(
 )"
 
 ORG="rodones"
-NAME="poisson-reconstruction"
+NAME="PoissonRecon"
 VERSION="latest"
 
 docker build \
