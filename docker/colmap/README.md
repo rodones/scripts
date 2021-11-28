@@ -1,4 +1,4 @@
-# COLMAP Docker Image 
+# docker: [colmap/colmap](https://github.com/colmap/colmap)
 
 ## With CUDA Support
 
