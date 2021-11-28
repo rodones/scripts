@@ -6,7 +6,7 @@ SCRIPT_DIR="$(
 )"
 
 ORG="rodones"
-NAME="PotreeConverter"
+NAME="potree-converter"
 VERSION="latest"
 
 docker build \
