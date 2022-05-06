@@ -5,6 +5,7 @@ This repository contains custom scripts, docker files, etc.
 ## Documents
 
 - [COLMAP container](docs/container-colmap.md)
+- [PoissonRecon container](docs/container-poisson-recon.md)
 - [Video to Image Convertion](docs/converting-video-to-images.md)
 - [Executing s4cmd commands parallel](docs/s4cmd-parallel-parallel-execution.md)
 - [Uploading Images to S3 Compatible Service](docs/uploading-images.md)
