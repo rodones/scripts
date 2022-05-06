@@ -40,7 +40,10 @@ used for remote server creation on digitalocean.
 
 Building process is described [here](./docker). 
 
-The prebuilt images are published in [Docker Hub](https://hub.docker.com/repository/docker/rodones/colmap).
+The prebuilt images are published in [Docker Hub](https://hub.docker.com/u/rodones).
+- [rodones/colmap](https://hub.docker.com/r/rodones/colmap)
+- [rodones/nexus](https://hub.docker.com/r/rodones/nexus)
+- [rodones/poisson-recon](https://hub.docker.com/r/rodones/poisson-recon)
 
 ## Usage
 
