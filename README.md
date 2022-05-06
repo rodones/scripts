@@ -2,6 +2,12 @@
 
 This repository contains custom scripts, docker files, etc. 
 
+## Documents
+
+- [Video to Image Convertion](docs/converting-video-to-images.md)
+- [Executing s4cmd commands parallel](docs/s4cmd-parallel-parallel-execution.md)
+- [Uploading Images to S3 Compatible Service](docs/uploading-images.md)
+
 ## Setup
 
 ### Requirements
@@ -10,7 +16,6 @@ This repository contains custom scripts, docker files, etc.
 - Docker Engine
     - [docker](https://docs.docker.com/engine/install/ubuntu/) (If CUDA is not enabled)
     - [nvidia-docker](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) (If CUDA enabled)
-- [s4cmd](https://github.com/bloomreach/s4cmd)
 
 #### Automated Instance Creation
 - [ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html?extIdCarryOver=true&sc_cid=701f2000001OH7YAAW)
@@ -21,6 +26,9 @@ This repository contains custom scripts, docker files, etc.
 
 ##### vid2img.sh
 - [ffmpeg](https://ffmpeg.org/download.html)
+
+##### sync.sh
+- [s4cmd](https://github.com/bloomreach/s4cmd)
 
 ### Configuration
 - Create `.env` using [.env.example](./.env.example) and fill. This will be used by  [start.sh](./start.sh) for 
@@ -45,10 +53,3 @@ The prebuilt images are published in [Docker Hub](https://hub.docker.com/reposit
 - Execute scripts using `rodo` in the container.
   - Type `rodo --help` to see available scripts.
   - Note: If you don't want logging and notification, skip this.
-
-
-## Documents
-
-- [Video to Image Convertion](docs/converting-video-to-images.md)
-- [Executing s4cmd commands parallel](docs/s4cmd-parallel-parallel-execution.md)
-- [Uploading Images to S3 Compatible Service](docs/uploading-images.md)
