@@ -5,12 +5,22 @@ This repository contains custom scripts, docker files, etc.
 ## Setup
 
 ### Requirements
-- nvidia-docker (docker if cuda won't be used)
-- ansible
-    - community.docker
-- terraform
-- s3cmd
-- ffmpeg
+
+#### Host System
+- Docker Engine
+    - [docker](https://docs.docker.com/engine/install/ubuntu/) (If CUDA is not enabled)
+    - [nvidia-docker](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html) (If CUDA enabled)
+- [s4cmd](https://github.com/bloomreach/s4cmd)
+
+#### Automated Instance Creation
+- [ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html?extIdCarryOver=true&sc_cid=701f2000001OH7YAAW)
+    - [community.docker](https://docs.ansible.com/ansible/latest/collections/community/docker/index.html)
+- [terraform](https://www.terraform.io/downloads)
+
+#### Miscellaneous
+
+##### vid2img.sh
+- [ffmpeg](https://ffmpeg.org/download.html)
 
 ### Configuration
 - Create `.env` using [.env.example](./.env.example) and fill. This will be used by  [start.sh](./start.sh) for 
