@@ -169,7 +169,8 @@ if array_contains PIPELINE "stereo_fusion"; then
         --workspace_path "$DENSE" \
         --workspace_format COLMAP \
         --input_type "$STREO_FUSION_INPUT_TYPE" \
-        --output_path "$FUSION_OUTPUT"
+        --output_path "$FUSION_OUTPUT" \
+        --StereoFusion.max_num_pixels 4000 
 fi
 
 if array_contains PIPELINE "poisson_mesher"; then
