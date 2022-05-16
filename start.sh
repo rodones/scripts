@@ -77,7 +77,7 @@ fi
 
 if [ "$VARIANT" == "gpu" ]; then
     VERSION="gpu-latest"
-    DOCKER_COND_ARGS+=("--gpus" "all")
+    DOCKER_COND_ARGS+=("--gpus" "all" "-e" "NVIDIA_DRIVER_CAPABILITIES=all")
 elif [ "$VARIANT" == "cpu" ]; then
     VERSION="cpu-latest"
 elif [ "$VARIANT" == "dev" ]; then
