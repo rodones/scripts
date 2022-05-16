@@ -77,7 +77,6 @@ fi
 
 if [ "$VARIANT" == "gpu" ]; then
     VERSION="gpu-latest"
-    DOCKER_COND_ARGS+=("--gpus" "all" "-e" "NVIDIA_DRIVER_CAPABILITIES=all")
 elif [ "$VARIANT" == "cpu" ]; then
     VERSION="cpu-latest"
 elif [ "$VARIANT" == "dev" ]; then
@@ -91,6 +90,8 @@ fi
 docker run \
     --rm \
     "${DOCKER_COND_ARGS[@]}" \
+    --gpus all \
+    -e "NVIDIA_DRIVER_CAPABILITIES=all" \
     --user="$(id --user):$(id --group)" \
     --privileged \
     -w /working \
